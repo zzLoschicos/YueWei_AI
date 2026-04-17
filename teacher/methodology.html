@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>方法论标准库 · 阅微 AI 诊断系统</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .sidebar-toggle{display:none}
+    @media(max-width:1024px){.sidebar-toggle{display:flex}}
+    .code-editor {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.8;
+      background: #1e293b;
+      color: #e2e8f0;
+      resize: none;
+      border: none;
+      outline: none;
+      padding: 20px;
+      width: 100%;
+      min-height: 500px;
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    }
+    .code-editor::selection { background: rgba(79,70,229,0.4); }
+    .method-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-full);
+      background: var(--color-slate-100);
+      font-size: var(--text-xs);
+      font-weight: 500;
+      color: var(--color-slate-600);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 2px solid transparent;
+    }
+    .method-tag:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .method-tag.active { background: var(--color-primary-light); border-color: var(--color-primary); color: var(--color-primary); }
+    @media (max-width: 1024px) {
+      .method-layout { grid-template-columns: 240px 1fr !important; }
+    }
+    @media (max-width: 768px) {
+      .method-layout { grid-template-columns: 1fr !important; }
+      .method-layout .card { margin-bottom: var(--space-3); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">阅</div>
+      <div><div class="logo-text">阅微 AI</div><span class="logo-sub">智能诊断系统</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">数据概览</div>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">数据看板</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">教学管理</div>
+        <a href="invite-codes.html" class="nav-item"><span class="nav-icon">🎟</span><span class="nav-label">邀请码管理</span></a>
+        <a href="questions.html" class="nav-item"><span class="nav-icon">📝</span><span class="nav-label">题目管理</span></a>
+        <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">报告查看</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">系统配置</div>
+        <a href="methodology.html" class="nav-item active"><span class="nav-icon">📖</span><span class="nav-label">方法论标准库</span></a>
+        <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span><span class="nav-label">系统设置</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">张</div>
+        <div class="user-info">
+          <div class="user-name">张明远</div>
+          <div class="user-role">语文教研组</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-btn sidebar-toggle btn-icon"><span style="font-size:18px">☰</span></button>
+      <div class="breadcrumb">
+        <a href="dashboard.html" class="breadcrumb-item">首页</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item current">方法论标准库</span>
+      </div>
+      <div class="topbar-actions">
+        <div style="display:flex;align-items:center;gap:var(--space-2);padding:6px 12px;background:var(--color-slate-100);border-radius:var(--radius-full)">
+          <div id="toggle-dot" style="width:8px;height:8px;border-radius:50%;background:var(--color-success)"></div>
+          <span class="text-xs fw-500" id="toggle-label" style="color:var(--color-slate-600)">标准库已启用</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="toggleMethodology()">
+          <span id="toggle-btn-text">禁用标准库</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">方法论标准库</h1>
+          <p class="page-desc">自定义 AI 批改标准，向批改流程注入专业知识，实时生效</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="resetToDefault()">
+            🔄 恢复默认
+          </button>
+          <button class="btn btn-primary" onclick="saveMethodology()">
+            💾 保存并发布
+          </button>
+        </div>
+      </div>
+
+      <!-- Info Banner -->
+      <div style="display:flex;align-items:flex-start;gap:var(--space-4);padding:var(--space-4) var(--space-5);background:var(--color-primary-light);border-radius:var(--radius-lg);margin-bottom:var(--space-5);border:1px solid rgba(79,70,229,0.15)">
+        <span style="font-size:20px;flex-shrink:0;margin-top:1px">💡</span>
+        <div class="text-sm" style="color:var(--color-primary-dark);line-height:1.7">
+          <b>标准库作用：</b>标准库内容会作为系统提示词的补充，在每次 AI 批改时自动附加。
+          修改后实时生效，无需重启服务。建议在充分测试后再发布到生产环境。
+        </div>
+      </div>
+
+      <div class="method-layout" style="display:grid;grid-template-columns:280px 1fr;gap:var(--space-5);align-items:start">
+
+        <!-- Left Panel: Navigation + Templates -->
+        <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+
+          <!-- Method Types -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">📚 标准库</div>
+            </div>
+            <div class="card-body" style="padding:var(--space-4)">
+              <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+                <button class="method-tag active" id="tag-poetry" onclick="switchMethod('poetry')">
+                  💮 诗歌鉴赏标准库
+                  <span class="badge badge-success" style="font-size:10px;padding:2px 6px">已修改</span>
+                </button>
+                <button class="method-tag" id="tag-modern" onclick="switchMethod('modern')">
+                  📚 现代文阅读标准库
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Template Quick-Insert -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⚡ 快速插入模板</div>
+            </div>
+            <div class="card-body" style="padding:var(--space-3) var(--space-4)">
+              <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+                <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="insertTemplate('poetry-three')">
+                  📌 三看三问三答框架
+                </button>
+                <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="insertTemplate('poetry-scoring')">
+                  📌 扣分细则表
+                </button>
+                <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="insertTemplate('modern-steps')">
+                  📌 现代文四步法
+                </button>
+                <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="insertTemplate('modern-scoring')">
+                  📌 红绿灯判定标准
+                </button>
+                <button class="btn btn-ghost btn-sm" style="justify-content:flex-start" onclick="insertTemplate('vocab')">
+                  📌 词汇升级对照表
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version History -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">🕐 版本记录</div>
+            </div>
+            <div class="card-body" style="padding:0">
+              <div style="display:flex;flex-direction:column">
+                <div style="padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-slate-100);cursor:pointer" onclick="restoreVersion('v3')">
+                  <div class="fw-600 text-sm">v3 · 当前版本</div>
+                  <div class="text-xs text-muted">2026-04-17 14:30 · 张明远</div>
+                </div>
+                <div style="padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-slate-100);cursor:pointer;color:var(--color-slate-400)" onclick="restoreVersion('v2')">
+                  <div class="fw-600 text-sm">v2</div>
+                  <div class="text-xs">2026-04-15 09:20 · 张明远</div>
+                </div>
+                <div style="padding:var(--space-3) var(--space-4);cursor:pointer;color:var(--color-slate-400)" onclick="restoreVersion('v1')">
+                  <div class="fw-600 text-sm">v1 · 初始版本</div>
+                  <div class="text-xs">2026-04-01 10:00 · 张明远</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: Editor -->
+        <div class="card" style="position:sticky;top:var(--space-6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-4) var(--space-5);border-bottom:1px solid var(--color-slate-100)">
+            <div style="display:flex;align-items:center;gap:var(--space-3)">
+              <span id="method-icon" style="font-size:20px">💮</span>
+              <div>
+                <div class="fw-600" id="method-title">诗歌鉴赏标准库</div>
+                <div class="text-xs text-muted" id="method-subtitle">影响所有诗歌鉴赏类题目的批改标准</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-2)">
+              <span class="text-xs text-muted" id="char-count">0 字符</span>
+              <button class="btn btn-ghost btn-sm" onclick="expandEditor()" data-tooltip="全屏编辑">⛶</button>
+            </div>
+          </div>
+
+          <textarea
+            id="method-editor"
+            class="code-editor"
+            spellcheck="false"
+            oninput="updateCharCount()"
+          ># 诗歌鉴赏批改标准库
+
+## 一、核心批改理念
+
+### 1. 三看三问三答体系
+- **三看**：看标题（定题材、挖题眼）、看作者（知人论世）、看注释与尾联（抓关键信息）
+- **三问**：
+  - 一问情：用一个字/词堵死核心情绪（如"悲""归""思""洁""勇""喜"）
+  - 二问法：说清楚工具怎么用（明手法 + 阐运用 + 析效果）
+  - 三问境：从个人感受上升到群体共鸣再到普遍价值（对己→对人→对世）
+- **三答**：定性 + 引诗 + 分析 + 效果/情感
+
+### 2. 扣分原则（按采分点精细化）
+| 错误类型 | 典型表现 | 扣分幅度 |
+|---------|---------|---------|
+| 纯翻译式复述 | 将诗句逐字翻译成白话，无术语无分析 | 该点得0分 |
+| 术语缺失 | 只写"很生动""很艰苦"，未用专业术语 | 扣1-2分 |
+| 情感浅层 | 只答"悲伤""高兴"，未分层（对己→对人→对世） | 扣1-2分 |
+| 结构分析缺失 | 未点明"为下文铺垫""总领全诗"等结构作用 | 扣1分 |
+| 手法误判 | 将"对比"说成"衬托"，或将"借景抒情"说成"直抒胸臆" | 扣1-2分 |
+
+## 二、词汇升级对照
+
+| 口语化（禁用） | 专业术语（推荐） |
+|--------------|--------------|
+| 水很冷，风很刺骨 | 以水的冰冷、风的凛冽写出边塞苦寒 |
+| 表达了悲伤的心情 | 寄寓了深沉的悲慨之情 |
+| 前面写了，后面也写了 | 首联奠定基调，颈联承上启下，尾联卒章显志 |
+| 用了比喻 | 运用比喻修辞，以A喻B，形象生动地写出…… |</textarea>
+        </div>
+      </div>
+
+      <!-- Preview Panel -->
+      <div class="card" style="margin-top:var(--space-5)">
+        <div class="card-header">
+          <div class="card-title">👁 批改效果预览</div>
+          <span class="badge badge-info">实时生效</span>
+        </div>
+        <div class="card-body">
+          <div style="background:var(--color-slate-50);padding:var(--space-5);border-radius:var(--radius-lg);font-size:var(--text-sm);line-height:2">
+            <div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px dashed var(--color-slate-200)">
+              <span class="badge badge-secondary">诗歌</span>
+              <span class="text-muted">›</span>
+              <span class="text-muted">系统提示词补充</span>
+              <span class="badge badge-success" style="margin-left:auto;font-size:10px">已应用标准库</span>
+            </div>
+            <div id="preview-content" style="color:var(--color-slate-600);max-height:200px;overflow:hidden;position:relative">
+              <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,#f1f5f9)"></div>
+              <b style="color:var(--color-slate-800)">【批改附加指令】</b><br>
+              本次批改需严格遵循"三看三问三答"体系。重点关注：<br>
+              ① 是否使用专业术语（渲染氛围、烘托、铺垫、对比、借景抒情等）<br>
+              ② 情感分析是否分层（对己→对人→对世）<br>
+              ③ 是否有点明结构作用（为下文铺垫、总领全诗、承上启下等）<br>
+              ④ 口语化表达需直接判定为错误，不得给分。<br>
+              <br>
+              <b style="color:var(--color-slate-800)">【词汇升级要求】</b><br>
+              学生出现"很悲""很生动"等口语化表达时，必须指出并提供正确术语。
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+
+function authHeaders() {
+  const token = localStorage.getItem('yw_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+let currentMethod = 'poetry';
+let isEnabled = true;
+let hasChanges = false;
+let methodData = {};
+
+const methodMeta = {
+  poetry: { icon: '💮', title: '诗歌鉴赏标准库', subtitle: '影响所有诗歌鉴赏类题目的批改标准' },
+  modern: { icon: '📚', title: '现代文阅读标准库', subtitle: '影响所有现代文阅读类题目的批改标准' },
+};
+
+async function loadMethodology() {
+  try {
+    const res = await fetch(`${API_BASE}/api/methodology`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      methodData = {};
+      json.data.list.forEach(m => {
+        methodData[m.type] = m;
+      });
+      renderMethodology();
+    }
+  } catch(err) {
+    console.log('Load error:', err);
+  }
+}
+
+function renderMethodology() {
+  const poetry = methodData['poetry'];
+  const modern = methodData['modern'];
+
+  // Update badge if modified
+  if (poetry) {
+    const badge = document.querySelector('#tag-poetry .badge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  // Update toggle state
+  const firstEnabled = poetry?.enabled ?? modern?.enabled ?? true;
+  isEnabled = firstEnabled === 1 || firstEnabled === true;
+  updateToggleUI();
+
+  // Load current method content
+  const content = methodData[currentMethod]?.content || getDefaultContent(currentMethod);
+  document.getElementById('method-editor').value = content;
+  updateCharCount();
+}
+
+function getDefaultContent(type) {
+  if (type === 'poetry') {
+    return `# 诗歌鉴赏批改标准库
+
+## 一、核心批改理念
+
+### 1. 三看三问三答体系
+- **三看**：看标题（定题材、挖题眼）、看作者（知人论世）、看注释与尾联（抓关键信息）
+- **三问**：
+  - 一问情：用一个字/词堵死核心情绪（如"悲""归""思""洁""勇""喜"）
+  - 二问法：说清楚工具怎么用（明手法 + 阐运用 + 析效果）
+  - 三问境：从个人感受上升到群体共鸣再到普遍价值（对己→对人→对世）
+- **三答**：定性 + 引诗 + 分析 + 效果/情感
+
+### 2. 扣分原则（按采分点精细化）
+| 错误类型 | 典型表现 | 扣分幅度 |
+|---------|---------|---------|
+| 纯翻译式复述 | 将诗句逐字翻译成白话，无术语无分析 | 该点得0分 |
+| 术语缺失 | 只写"很生动""很艰苦"，未用专业术语 | 扣1-2分 |
+| 情感浅层 | 只答"悲伤""高兴"，未分层（对己→对人→对世） | 扣1-2分 |
+| 结构分析缺失 | 未点明"为下文铺垫""总领全诗"等结构作用 | 扣1分 |
+| 手法误判 | 将"对比"说成"衬托"，或将"借景抒情"说成"直抒胸臆" | 扣1-2分 |
+
+## 二、词汇升级对照
+
+| 口语化（禁用） | 专业术语（推荐） |
+|--------------|--------------|
+| 水很冷，风很刺骨 | 以水的冰冷、风的凛冽写出边塞苦寒 |
+| 表达了悲伤的心情 | 寄寓了深沉的悲慨之情 |
+| 前面写了，后面也写了 | 首联奠定基调，颈联承上启下，尾联卒章显志 |
+| 用了比喻 | 运用比喻修辞，以A喻B，形象生动地写出…… |
+`;
+  }
+  return `# 现代文阅读批改标准库
+
+## 一、核心批改理念
+
+### 现代文四步法
+1. 速读故事（情节）→ 2. 聚焦人物（形象）→ 3. 品味手法（技巧）→ 4. 提炼主题（主旨）
+
+### 红绿灯判定
+- ✅ correct：精准踩点，术语正确，有文本依据
+- ⚠️ partial：意思沾边但口语化/要点不全/分析浅显
+- ❌ wrong：答非所问/无文本依据/严重事实错误
+
+## 二、扣分原则
+
+| 错误类型 | 扣分幅度 |
+|---------|---------|
+| 口语化表达 | 扣1-2分 |
+| 术语缺失 | 扣1-2分 |
+| 情感分析浅层 | 扣1分 |
+| 手法误判 | 扣1-2分 |
+| 结构分析缺失 | 扣1分 |
+
+## 三、词汇升级对照
+
+| 口语化（禁用） | 专业术语（推荐） |
+|--------------|--------------|
+| 很感人/很生动 | 形象生动、引人共鸣 |
+| 用了比喻 | 运用比喻修辞 |
+| 表达了悲伤 | 寄寓了深沉的悲慨之情 |
+`;
+}
+
+function switchMethod(type) {
+  currentMethod = type;
+  const meta = methodMeta[type];
+
+  document.getElementById('method-icon').textContent = meta.icon;
+  document.getElementById('method-title').textContent = meta.title;
+  document.getElementById('method-subtitle').textContent = meta.subtitle;
+
+  document.querySelectorAll('.method-tag').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tag-${type}`).classList.add('active');
+
+  // Load content for this type
+  const content = methodData[type]?.content || getDefaultContent(type);
+  document.getElementById('method-editor').value = content;
+  hasChanges = false;
+  updateCharCount();
+}
+
+function updateCharCount() {
+  const text = document.getElementById('method-editor').value;
+  document.getElementById('char-count').textContent = text.length + ' 字符';
+  hasChanges = true;
+}
+
+function updateToggleUI() {
+  const dot = document.getElementById('toggle-dot');
+  const label = document.getElementById('toggle-label');
+  const btn = document.getElementById('toggle-btn-text');
+
+  if (isEnabled) {
+    dot.style.background = 'var(--color-success)';
+    label.textContent = '标准库已启用';
+    btn.textContent = '禁用标准库';
+  } else {
+    dot.style.background = 'var(--color-slate-400)';
+    label.textContent = '标准库已禁用';
+    btn.textContent = '启用标准库';
+  }
+}
+
+async function toggleMethodology() {
+  isEnabled = !isEnabled;
+  updateToggleUI();
+
+  // Save toggle state to API
+  try {
+    const id = methodData[currentMethod]?.id;
+    if (id) {
+      await fetch(`${API_BASE}/api/methodology/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ enabled: isEnabled })
+      });
+    }
+  } catch(e) {}
+
+  Toast.show(isEnabled ? 'success' : 'warning',
+    isEnabled ? '标准库已启用' : '标准库已禁用',
+    isEnabled ? 'AI 批改将使用自定义标准库' : 'AI 批改将使用内置提示词');
+}
+
+async function saveMethodology() {
+  const content = document.getElementById('method-editor').value;
+  if (!content.trim()) {
+    Toast.warning('请输入标准库内容');
+    return;
+  }
+
+  try {
+    const existing = methodData[currentMethod];
+    if (existing) {
+      // Update
+      const res = await fetch(`${API_BASE}/api/methodology/${existing.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ content })
+      });
+      const json = await res.json();
+      if (json.code === 0) {
+        methodData[currentMethod].content = content;
+        Toast.success('保存成功', '标准库已更新，将在下次批改时生效');
+        hasChanges = false;
+      } else {
+        Toast.error('保存失败', json.message);
+      }
+    } else {
+      // Create
+      const res = await fetch(`${API_BASE}/api/methodology`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({
+          name: methodMeta[currentMethod].title,
+          type: currentMethod,
+          description: methodMeta[currentMethod].subtitle,
+          content
+        })
+      });
+      const json = await res.json();
+      if (json.code === 0) {
+        methodData[currentMethod] = { id: json.data.id, type: currentMethod, content };
+        Toast.success('保存成功', '标准库已更新，将在下次批改时生效');
+        hasChanges = false;
+      } else {
+        Toast.error('保存失败', json.message);
+      }
+    }
+  } catch(e) {
+    Toast.error('网络错误', '无法保存标准库');
+  }
+}
+
+function resetToDefault() {
+  Modal.confirm({
+    title: '恢复默认',
+    message: '确定要恢复为系统默认标准库吗？当前修改将被覆盖。',
+    confirmText: '确认恢复',
+    danger: true,
+  }).then(ok => {
+    if (ok) {
+      document.getElementById('method-editor').value = getDefaultContent(currentMethod);
+      updateCharCount();
+      Toast.success('已恢复', '标准库已恢复为系统默认版本');
+    }
+  });
+}
+
+function restoreVersion(version) {
+  Toast.info('正在加载', `正在恢复 v${version} 版本…`);
+  setTimeout(() => Toast.success('已恢复', `已恢复至 v${version}，请检查内容后保存`), 800);
+}
+
+function insertTemplate(type) {
+  const textarea = document.getElementById('method-editor');
+  const templates = {
+    'poetry-three': `\n## 三看三问三答框架\n- 三看：看标题（定题材、挖题眼）、看作者（知人论世）、看注释与尾联（抓关键信息）\n- 三问：一问情（核心情绪）、二问法（手法运用）、三问境（情感升华）\n- 三答：定性 + 引诗 + 分析 + 析效果/情感\n`,
+    'poetry-scoring': `\n## 扣分细则\n| 错误类型 | 扣分幅度 |\n|---------|---------|\n| 纯翻译，无术语 | 该点0分 |\n| 术语缺失 | 扣1-2分 |\n| 情感单一 | 扣1-2分 |\n| 结构分析缺失 | 扣1分 |\n| 手法误判 | 扣1-2分 |\n`,
+    'modern-steps': `\n## 现代文四步法\n1. 速读故事（情节）→ 2. 聚焦人物（形象）→ 3. 品味手法（技巧）→ 4. 提炼主题（主旨）\n`,
+    'modern-scoring': `\n## 红绿灯判定\n- ✅ correct：精准踩点，术语正确，有文本依据\n- ⚠️ partial：意思沾边但口语化/要点不全/分析浅显\n- ❌ wrong：答非所问/无文本依据/严重事实错误\n`,
+    'vocab': `\n## 词汇升级对照\n| 口语化（禁用） | 专业术语（推荐） |\n|--------------|--------------|\n| 很感人/很生动 | 形象生动、引人共鸣 |\n| 用了比喻 | 运用比喻修辞 |\n| 表达了悲伤 | 寄寓了深沉的悲慨之情 |\n`,
+  };
+
+  textarea.value += templates[type] || '';
+  textarea.focus();
+  updateCharCount();
+  Toast.show('info', '已插入模板', '请根据实际情况调整内容');
+}
+
+function expandEditor() {
+  Modal.show({
+    title: '📖 全屏编辑 · ' + document.getElementById('method-title').textContent,
+    size: 'xl',
+    content: `<textarea id="fullscreen-editor" class="code-editor" style="min-height:600px;border-radius:var(--radius-lg)">${document.getElementById('method-editor').value}</textarea>`,
+    footer: `
+      <button class="btn btn-secondary" onclick="Modal.hide()">取消</button>
+      <button class="btn btn-primary" onclick="applyFullscreen()">✓ 应用并关闭</button>
+    `,
+  });
+}
+
+function applyFullscreen() {
+  const content = document.getElementById('fullscreen-editor').value;
+  document.getElementById('method-editor').value = content;
+  updateCharCount();
+  Modal.hide();
+  Toast.success('已应用', '修改已同步到编辑器');
+}
+
+document.addEventListener('DOMContentLoaded', loadMethodology);
+</script>
+</body>
+</html>

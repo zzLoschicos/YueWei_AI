@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>题目管理 · 阅微 AI 诊断系统</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>.sidebar-toggle{display:none}@media(max-width:1024px){.sidebar-toggle{display:flex}}</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">阅</div>
+      <div><div class="logo-text">阅微 AI</div><span class="logo-sub">智能诊断系统</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">数据概览</div>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">数据看板</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">教学管理</div>
+        <a href="invite-codes.html" class="nav-item"><span class="nav-icon">🎟</span><span class="nav-label">邀请码管理</span></a>
+        <a href="questions.html" class="nav-item active"><span class="nav-icon">📝</span><span class="nav-label">题目管理</span></a>
+        <a href="reports.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-label">报告查看</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">系统配置</div>
+        <a href="methodology.html" class="nav-item"><span class="nav-icon">📖</span><span class="nav-label">方法论标准库</span></a>
+        <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span><span class="nav-label">系统设置</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">张</div>
+        <div class="user-info">
+          <div class="user-name">张明远</div>
+          <div class="user-role">语文教研组</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-btn sidebar-toggle btn-icon"><span style="font-size:18px">☰</span></button>
+      <div class="breadcrumb">
+        <a href="dashboard.html" class="breadcrumb-item">首页</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item current">题目管理</span>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">题目管理</h1>
+          <p class="page-desc">录入并管理语文试卷题目，设置标准答案与采分点，供学生提交作答</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-primary" onclick="openCreateModal()">
+            + 发布新题目
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:var(--space-5)">
+        <div class="stat-card primary">
+          <div class="stat-icon">📝</div>
+          <div class="stat-value">24</div>
+          <div class="stat-label">题目总数</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-icon">💮</div>
+          <div class="stat-value">15</div>
+          <div class="stat-label">诗歌鉴赏</div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-icon">📚</div>
+          <div class="stat-value">9</div>
+          <div class="stat-label">现代文阅读</div>
+        </div>
+      </div>
+
+      <!-- Tabs + Filter -->
+      <div class="card">
+        <div class="tabs" style="padding:var(--space-4) var(--space-6) 0">
+          <div class="tab-item active" onclick="switchTab(this, 'all')">全部题目</div>
+          <div class="tab-item" onclick="switchTab(this, '诗歌')">诗歌鉴赏</div>
+          <div class="tab-item" onclick="switchTab(this, '现代文')">现代文阅读</div>
+        </div>
+
+        <div class="toolbar" style="padding:var(--space-4) var(--space-6)">
+          <div class="toolbar-search search-input-wrapper" style="flex:1;max-width:320px">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-input" id="search-input" placeholder="搜索题目名称…" oninput="renderQuestions()">
+          </div>
+          <div class="toolbar-actions">
+            <span class="text-sm text-muted" id="question-count">共 24 个题目</span>
+          </div>
+        </div>
+
+        <div id="questions-list" style="padding:0 var(--space-6) var(--space-6)"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+
+let allQuestions = [];
+let filteredQuestions = [];
+let currentFilter = 'all';
+
+function authHeaders() {
+  const token = localStorage.getItem('yw_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+// Load questions from API
+async function loadQuestions() {
+  try {
+    const res = await fetch(`${API_BASE}/api/questions?limit=100`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      allQuestions = json.data.list.map(q => ({
+        id: q.id,
+        title: q.title,
+        type: q.type === 'poetry' ? '诗歌' : '现代文',
+        content: q.content || '',
+        answerCount: q.scoring_rules ? (Array.isArray(q.scoring_rules) ? q.scoring_rules.length : 0) : 0,
+        submitCount: q.submit_count || 0,
+        avgScore: q.avg_score || 0,
+        createdAt: q.created_at ? new Date(q.created_at).toLocaleDateString('zh-CN') : '—',
+        status: q.status || 'published',
+        difficulty: q.difficulty || 'medium',
+        answer_template: q.answer_template || '',
+        scoring_rules: q.scoring_rules || [],
+        raw: q
+      }));
+      updateStats();
+      applyFilters();
+    }
+  } catch(err) {
+    Toast.error('网络错误', '无法加载题目数据');
+  }
+}
+
+function updateStats() {
+  const total = allQuestions.length;
+  const poetry = allQuestions.filter(q => q.type === '诗歌').length;
+  const modern = allQuestions.filter(q => q.type === '现代文').length;
+  document.querySelector('.stat-card.primary .stat-value').textContent = total;
+  document.querySelector('.stat-card.success .stat-value').textContent = poetry;
+  document.querySelector('.stat-card.info .stat-value').textContent = modern;
+}
+
+function applyFilters() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  filteredQuestions = allQuestions.filter(q => {
+    if (currentFilter !== 'all' && q.type !== currentFilter) return false;
+    if (search && !q.title.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  document.getElementById('question-count').textContent = `共 ${filteredQuestions.length} 个题目`;
+  renderQuestions();
+}
+
+function switchTab(el, filter) {
+  el.parentElement.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentFilter = filter;
+  applyFilters();
+}
+
+function renderQuestions() {
+  const container = document.getElementById('questions-list');
+  container.innerHTML = filteredQuestions.length === 0
+    ? `<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-title">暂无题目</div></div>`
+    : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:var(--space-4)">
+        ${filteredQuestions.map(q => `
+          <div class="card" style="cursor:pointer" onclick="openQuestionDetail(${q.id})">
+            <div class="card-body" style="padding:var(--space-5)">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:var(--space-3)">
+                <span class="badge ${q.type==='诗歌'?'badge-secondary':'badge-info'}">${q.type === '诗歌' ? '诗歌鉴赏' : '现代文阅读'}</span>
+                <span class="badge ${q.status === 'published' ? 'badge-success' : 'badge-neutral'} badge-dot">${q.status === 'published' ? '已发布' : '草稿'}</span>
+              </div>
+              <h3 class="fw-600 mb-3" style="font-size:var(--text-base);color:var(--color-slate-800)">${q.title}</h3>
+              <p class="text-sm text-muted truncate mb-4" style="max-width:280px">${q.content}</p>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-slate-100)">
+                <div style="text-align:center">
+                  <div class="fw-700 text-primary">${q.answerCount}</div>
+                  <div class="text-xs text-muted">采分点</div>
+                </div>
+                <div style="text-align:center">
+                  <div class="fw-700">${q.submitCount}</div>
+                  <div class="text-xs text-muted">已提交</div>
+                </div>
+                <div style="text-align:center">
+                  <div class="fw-700 ${q.avgScore >= 7 ? 'text-success' : q.avgScore >= 5 ? 'text-warning' : 'text-danger'}">${q.avgScore || '—'}</div>
+                  <div class="text-xs text-muted">班级均分</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer" style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) var(--space-5)">
+              <span class="text-xs text-muted">${q.createdAt} 发布</span>
+              <div class="table-actions" style="gap:var(--space-1)">
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openEditModal(${q.id})">编辑</button>
+                <button class="btn btn-ghost btn-sm text-danger" onclick="event.stopPropagation();deleteQuestion(${q.id})">删除</button>
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>`;
+}
+
+function openCreateModal() {
+  Modal.show({
+    title: '📝 发布新题目',
+    size: 'lg',
+    content: `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+        <div class="form-group">
+          <label class="form-label" for="q-title">题目简称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="q-title" placeholder="如：24年期中·诗歌鉴赏-饮酒">
+          <div class="form-hint">学生下拉菜单中显示的名称，建议简洁</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="q-subject">科目 <span class="required">*</span></label>
+          <select class="form-select" id="q-subject">
+            <option value="poetry">💮 诗歌鉴赏</option>
+            <option value="modern">📚 现代文阅读</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="q-content">题目原文 / 阅读材料 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="q-content" rows="6" placeholder="在此粘贴完整的题目原文或阅读材料内容…" style="min-height:140px"></textarea>
+        <div class="form-hint">AI 会将此内容作为背景知识，防止批改时产生幻觉</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="q-answer">标准答案及核心采分点 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="q-answer" rows="6" placeholder="(1) 景物描写作用题（4分）&#10;  ① 定性画面（1分）：xxx&#10;  ② 结合诗句描述（1分）：xxx&#10;  ② 点明作用（2分）：xxx&#10;&#10;(2) 情感分析题（4分）…" style="min-height:140px;background:var(--color-primary-light)"></textarea>
+        <div class="form-hint">建议按"踩点得分"格式分条陈述，标注每条分值，AI 据此判断学生是否踩点</div>
+      </div>
+    `,
+    footer: `
+      <button class="btn btn-secondary" onclick="Modal.hide()">取消</button>
+      <button class="btn btn-primary" onclick="saveQuestion()">💾 发布题目</button>
+    `,
+  });
+}
+
+async function saveQuestion() {
+  const title = document.getElementById('q-title').value.trim();
+  const content = document.getElementById('q-content').value.trim();
+  const answer = document.getElementById('q-answer').value.trim();
+  const type = document.getElementById('q-subject').value;
+
+  if (!title || !content || !answer) {
+    Toast.warning('请完整填写所有必填字段');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/questions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        title,
+        type,
+        content,
+        answer_template: answer,
+        scoring_rules: [],
+        difficulty: 'medium'
+      })
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      Modal.hide();
+      Toast.success('发布成功', `题目「${title}」已成功发布`);
+      loadQuestions();
+    } else {
+      Toast.error('发布失败', json.message);
+    }
+  } catch(e) {
+    Toast.error('网络错误', '无法发布题目');
+  }
+}
+
+async function deleteQuestion(id) {
+  const ok = await Modal.confirm({
+    title: '确认删除题目',
+    message: '确定要删除此题目吗？已提交的作答记录不受影响。',
+    confirmText: '确认删除',
+    danger: true,
+  });
+  if (ok) {
+    try {
+      const res = await fetch(`${API_BASE}/api/questions/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.code === 0) {
+        Toast.success('已删除', '题目已从题库中移除');
+        loadQuestions();
+      } else {
+        Toast.error('删除失败', json.message);
+      }
+    } catch(e) {
+      Toast.error('网络错误', '无法删除题目');
+    }
+  }
+}
+
+async function openQuestionDetail(id) {
+  const q = allQuestions.find(q => q.id === id);
+  if (!q) return;
+
+  // Fetch full detail
+  try {
+    const res = await fetch(`${API_BASE}/api/questions/${id}`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      const detail = json.data;
+      const scoring_rules = detail.scoring_rules || [];
+
+      Modal.show({
+        title: q.title,
+        size: 'lg',
+        content: `
+          <div style="margin-bottom:var(--space-5)">
+            <span class="badge ${q.type==='诗歌'?'badge-secondary':'badge-info'} mb-3">${q.type === '诗歌' ? '诗歌鉴赏' : '现代文阅读'}</span>
+            <div style="background:var(--color-slate-50);padding:var(--space-5);border-radius:var(--radius-lg);margin-bottom:var(--space-4)">
+              <div class="text-xs fw-600 text-muted mb-2">📄 原文内容</div>
+              <div class="text-sm" style="line-height:1.8">${detail.content || q.content}</div>
+            </div>
+          </div>
+          ${scoring_rules.length > 0 ? `
+          <div class="card" style="margin-bottom:var(--space-4)">
+            <div class="card-header"><div class="card-title" style="font-size:var(--text-sm)">📝 采分点（${scoring_rules.length}个）</div></div>
+            <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+              ${scoring_rules.map((s, i) => `<div class="text-sm mb-2">${i+1}. ${s.item} <span class="badge badge-primary" style="margin-left:8px">${s.max_score}分</span></div>`).join('')}
+            </div>
+          </div>
+          ` : ''}
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-bottom:var(--space-5)">
+            <div class="stat-card primary" style="padding:var(--space-4)">
+              <div class="stat-value" style="font-size:var(--text-2xl)">${q.answerCount || scoring_rules.length}</div>
+              <div class="stat-label">采分点数</div>
+            </div>
+            <div class="stat-card success" style="padding:var(--space-4)">
+              <div class="stat-value" style="font-size:var(--text-2xl)">${q.submitCount}</div>
+              <div class="stat-label">累计提交</div>
+            </div>
+            <div class="stat-card info" style="padding:var(--space-4)">
+              <div class="stat-value" style="font-size:var(--text-2xl)">${q.avgScore || '—'}</div>
+              <div class="stat-label">班级均分</div>
+            </div>
+          </div>
+        `,
+        footer: `
+          <button class="btn btn-secondary" onclick="Modal.hide()">关闭</button>
+          <button class="btn btn-primary" onclick="Modal.hide();openEditModal(${id})">✏️ 编辑题目</button>
+        `,
+      });
+    }
+  } catch(e) {
+    Modal.show({
+      title: q.title,
+      size: 'lg',
+      content: `
+        <div style="margin-bottom:var(--space-5)">
+          <span class="badge ${q.type==='诗歌'?'badge-secondary':'badge-info'} mb-3">${q.type === '诗歌' ? '诗歌鉴赏' : '现代文阅读'}</span>
+          <div style="background:var(--color-slate-50);padding:var(--space-5);border-radius:var(--radius-lg);margin-bottom:var(--space-4)">
+            <div class="text-xs fw-600 text-muted mb-2">📄 原文内容</div>
+            <div class="text-sm" style="line-height:1.8">${q.content}</div>
+          </div>
+        </div>
+      `,
+      footer: `<button class="btn btn-secondary" onclick="Modal.hide()">关闭</button>`,
+    });
+  }
+}
+
+function openEditModal(id) {
+  const q = allQuestions.find(q => q.id === id);
+  if (!q) return;
+
+  Modal.show({
+    title: '✏️ 编辑题目',
+    size: 'lg',
+    content: `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+        <div class="form-group">
+          <label class="form-label">题目简称 <span class="required">*</span></label>
+          <input type="text" class="form-input" id="eq-title" value="${q.title}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">科目</label>
+          <select class="form-select" id="eq-subject">
+            <option value="poetry" ${q.type==='诗歌'?'selected':''}>💮 诗歌鉴赏</option>
+            <option value="modern" ${q.type==='现代文'?'selected':''}>📚 现代文阅读</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">题目原文 / 阅读材料 <span class="required">*</span></label>
+        <textarea class="form-textarea" id="eq-content" rows="6" style="min-height:140px">${q.content}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">标准答案及核心采分点</label>
+        <textarea class="form-textarea" id="eq-answer" rows="6" style="min-height:140px;background:var(--color-primary-light)">${q.answer_template}</textarea>
+      </div>
+    `,
+    footer: `
+      <button class="btn btn-secondary" onclick="Modal.hide()">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit(${id})">💾 保存修改</button>
+    `,
+  });
+}
+
+async function saveEdit(id) {
+  const title = document.getElementById('eq-title').value.trim();
+  const content = document.getElementById('eq-content').value.trim();
+  const answer = document.getElementById('eq-answer').value.trim();
+  const type = document.getElementById('eq-subject').value;
+
+  if (!title || !content) {
+    Toast.warning('请完整填写必填字段');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/questions/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({
+        title,
+        type,
+        content,
+        answer_template: answer
+      })
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      Modal.hide();
+      Toast.success('保存成功', '题目已更新');
+      loadQuestions();
+    } else {
+      Toast.error('保存失败', json.message);
+    }
+  } catch(e) {
+    Toast.error('网络错误', '无法保存修改');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadQuestions);
+</script>
+</body>
+</html>

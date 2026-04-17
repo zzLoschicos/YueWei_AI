@@ -1,0 +1,60 @@
+# 阅微 AI 诊断系统 · Docker Compose 配置
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yuewei-backend
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - HOST=0.0.0.0
+      - DB_PATH=/app/data/yuewei.db
+      - JWT_SECRET=${JWT_SECRET:?请设置 JWT_SECRET}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:?请设置 DEEPSEEK_API_KEY}
+      - DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # 前端静态文件服务（可选，生产环境建议用 Nginx）
+  frontend:
+    image: nginx:alpine
+    container_name: yuewei-frontend
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./teacher:/usr/share/nginx/html/teacher:ro
+      - ./student:/usr/share/nginx/html/student:ro
+      - ./css:/usr/share/nginx/html/css:ro
+      - ./js:/usr/share/nginx/html/js:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+
+  # Nginx 反向代理（生产环境推荐）
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: yuewei-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # 请自行准备 SSL 证书
+    depends_on:
+      - backend
+      - frontend

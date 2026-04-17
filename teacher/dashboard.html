@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据看板 · 阅微 AI 诊断系统</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .sidebar-toggle { display: none; }
+    @media (max-width: 1024px) { .sidebar-toggle { display: flex; } }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">阅</div>
+      <div>
+        <div class="logo-text">阅微 AI</div>
+        <span class="logo-sub">智能诊断系统</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">数据概览</div>
+        <a href="dashboard.html" class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">数据看板</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">教学管理</div>
+        <a href="invite-codes.html" class="nav-item">
+          <span class="nav-icon">🎟</span>
+          <span class="nav-label">邀请码管理</span>
+        </a>
+        <a href="questions.html" class="nav-item">
+          <span class="nav-icon">📝</span>
+          <span class="nav-label">题目管理</span>
+        </a>
+        <a href="reports.html" class="nav-item">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">报告查看</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">系统配置</div>
+        <a href="methodology.html" class="nav-item">
+          <span class="nav-icon">📖</span>
+          <span class="nav-label">方法论标准库</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+          <span class="nav-icon">⚙</span>
+          <span class="nav-label">系统设置</span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">张</div>
+        <div class="user-info">
+          <div class="user-name">张明远</div>
+          <div class="user-role">语文教研组</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <button class="topbar-btn sidebar-toggle btn-icon">
+        <span style="font-size:18px">☰</span>
+      </button>
+
+      <div class="breadcrumb">
+        <span class="breadcrumb-item">首页</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item current">数据看板</span>
+      </div>
+
+      <div class="topbar-actions">
+        <button class="topbar-btn btn-icon" data-tooltip="通知" onclick="Toast.info('暂无新通知')">
+          🔔
+          <span class="badge-dot"></span>
+        </button>
+        <button class="topbar-btn btn-icon" data-tooltip="帮助文档">❓</button>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">数据看板</h1>
+          <p class="page-desc">实时掌握班级诊断数据，了解学生薄弱点分布</p>
+        </div>
+        <div class="page-actions">
+          <span class="text-sm text-muted" style="align-self:center">数据更新于 10 分钟前</span>
+          <button class="btn btn-secondary btn-sm" onclick="Toast.info('刷新数据')">
+            🔄 刷新
+          </button>
+          <button class="btn btn-primary btn-sm">
+            📤 导出报表
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card primary">
+          <div class="stat-icon">📋</div>
+          <div class="stat-value">1,258</div>
+          <div class="stat-label">总邀请码数量</div>
+          <span class="stat-trend up">↑ 12% 较上月</span>
+        </div>
+
+        <div class="stat-card success">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value">842</div>
+          <div class="stat-label">已激活码（绑定学生）</div>
+          <span class="stat-trend up">↑ 8.3%</span>
+        </div>
+
+        <div class="stat-card info">
+          <div class="stat-icon">📝</div>
+          <div class="stat-value">3,641</div>
+          <div class="stat-label">累计诊断次数</div>
+          <span class="stat-trend up">↑ 23% 较上月</span>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-value">5</div>
+          <div class="stat-label">即将耗尽（≤2次）</div>
+          <span class="stat-trend down">↓ 需要关注</span>
+        </div>
+
+        <div class="stat-card danger">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-value">12</div>
+          <div class="stat-label">已耗尽码</div>
+          <span class="stat-trend neutral">待处理</span>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:var(--space-5);margin-bottom:var(--space-6)">
+        <!-- Trend Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📈 近 7 日提交趋势</div>
+            <div class="tabs" style="border:none;gap:0">
+              <div class="tab-item active" onclick="this.parentElement.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));this.classList.add('active')">提交量</div>
+              <div class="tab-item" onclick="this.parentElement.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));this.classList.add('active')">得分率</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:flex;align-items:flex-end;gap:12px;height:180px;padding:0 8px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:60%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">128</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">4/11</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:80%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">196</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">4/12</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:45%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">96</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">4/13</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:100%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">243</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">4/14</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:72%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">172</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">4/15</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:55%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">118</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">4/16</span>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="height:38%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative">
+                  <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">89</span>
+                </div>
+                <span style="font-size:11px;color:#94A3B8">今天</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score Distribution -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎯 得分率分布</div>
+          </div>
+          <div class="card-body" style="padding:var(--space-4) var(--space-6)">
+            <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                  <span class="text-sm fw-600">优秀 (≥80%)</span>
+                  <span class="text-sm text-success fw-600">42%</span>
+                </div>
+                <div class="progress"><div class="progress-bar success" style="width:42%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                  <span class="text-sm fw-600">良好 (60-79%)</span>
+                  <span class="text-sm text-primary fw-600">31%</span>
+                </div>
+                <div class="progress"><div class="progress-bar" style="width:31%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                  <span class="text-sm fw-600">及格 (40-59%)</span>
+                  <span class="text-sm text-warning fw-600">18%</span>
+                </div>
+                <div class="progress"><div class="progress-bar warning" style="width:18%"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                  <span class="text-sm fw-600">待提升 (&lt;40%)</span>
+                  <span class="text-sm text-danger fw-600">9%</span>
+                </div>
+                <div class="progress"><div class="progress-bar danger" style="width:9%"></div></div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);text-align:center">
+              <div>
+                <div class="text-2xl fw-700 text-primary">68.4%</div>
+                <div class="text-xs text-muted">班级平均得分</div>
+              </div>
+              <div>
+                <div class="text-2xl fw-700 text-success">+5.2</div>
+                <div class="text-xs text-muted">较上月提升</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)">
+
+        <!-- Active Classes Ranking -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🏆 班级活跃排行</div>
+            <button class="btn btn-ghost btn-sm">查看全部</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th style="width:40px">#</th>
+                  <th>班级</th>
+                  <th>激活率</th>
+                  <th>提交量</th>
+                  <th>均分</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-warning" style="width:22px;text-align:center">1</span></td>
+                  <td><div class="fw-600">高一（2）班</div><div class="text-xs text-muted">语文教师：李静</div></td>
+                  <td><span class="badge badge-success badge-dot">98%</span></td>
+                  <td class="fw-600">312</td>
+                  <td><span class="text-success fw-600">72.4</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-neutral" style="width:22px;text-align:center">2</span></td>
+                  <td><div class="fw-600">高一（1）班</div><div class="text-xs text-muted">语文教师：李静</div></td>
+                  <td><span class="badge badge-success badge-dot">89%</span></td>
+                  <td class="fw-600">287</td>
+                  <td><span class="text-success fw-600">69.8</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-neutral" style="width:22px;text-align:center">3</span></td>
+                  <td><div class="fw-600">高一（3）班</div><div class="text-xs text-muted">语文教师：王明</div></td>
+                  <td><span class="badge badge-primary badge-dot">76%</span></td>
+                  <td class="fw-600">241</td>
+                  <td><span class="fw-600">65.1</span></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-neutral" style="width:22px;text-align:center">4</span></td>
+                  <td><div class="fw-600">高二（1）班</div><div class="text-xs text-muted">语文教师：陈思</div></td>
+                  <td><span class="badge badge-info badge-dot">63%</span></td>
+                  <td class="fw-600">198</td>
+                  <td><span class="fw-600">61.3</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚠️ 需要关注</div>
+            <span class="badge badge-danger">3 项</span>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div style="display:flex;flex-direction:column">
+              <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--color-slate-100)">
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--color-danger-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:16px">🔴</span>
+                </div>
+                <div style="flex:1">
+                  <div class="fw-600 text-sm">12 个邀请码已耗尽</div>
+                  <div class="text-xs text-muted">涉及 8 名学生，请及时补充</div>
+                </div>
+                <button class="btn btn-danger btn-sm">处理</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--color-slate-100)">
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--color-warning-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:16px">⚠️</span>
+                </div>
+                <div style="flex:1">
+                  <div class="fw-600 text-sm">5 个邀请码即将耗尽（≤2次）</div>
+                  <div class="text-xs text-muted">建议提前补充额度</div>
+                </div>
+                <button class="btn btn-secondary btn-sm">查看</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4) var(--space-6)">
+                <div style="width:36px;height:36px;border-radius:50%;background:var(--color-info-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:16px">💡</span>
+                </div>
+                <div style="flex:1">
+                  <div class="fw-600 text-sm">现代文得分率持续偏低</div>
+                  <div class="text-xs text-muted">建议增加现代文专项练习</div>
+                </div>
+                <button class="btn btn-ghost btn-sm">详情</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card" style="margin-top:var(--space-5)">
+        <div class="card-header">
+          <div class="card-title">🕐 最近提交记录</div>
+          <button class="btn btn-ghost btn-sm" onclick="Toast.info('查看全部')">查看全部 ›</button>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>学生</th>
+                <th>题目</th>
+                <th>科目</th>
+                <th>得分</th>
+                <th>提交时间</th>
+                <th>报告</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div class="fw-600">李明轩</div><div class="text-xs text-muted">高一(2)班</div></td>
+                <td class="truncate" style="max-width:200px">24年期中·诗歌鉴赏-饮酒</td>
+                <td><span class="badge badge-secondary">诗歌</span></td>
+                <td><span class="badge badge-success">7.5/10</span></td>
+                <td class="text-muted text-xs">4 分钟前</td>
+                <td><button class="action-link">查看报告 ›</button></td>
+              </tr>
+              <tr>
+                <td><div class="fw-600">王思涵</div><div class="text-xs text-muted">高一(1)班</div></td>
+                <td class="truncate" style="max-width:200px">现代文·背影阅读理解</td>
+                <td><span class="badge badge-info">现代文</span></td>
+                <td><span class="badge badge-warning">5.0/10</span></td>
+                <td class="text-muted text-xs">18 分钟前</td>
+                <td><button class="action-link">查看报告 ›</button></td>
+              </tr>
+              <tr>
+                <td><div class="fw-600">张雨萱</div><div class="text-xs text-muted">高一(2)班</div></td>
+                <td class="truncate" style="max-width:200px">24年期中·诗歌鉴赏-饮酒</td>
+                <td><span class="badge badge-secondary">诗歌</span></td>
+                <td><span class="badge badge-success">8.5/10</span></td>
+                <td class="text-muted text-xs">32 分钟前</td>
+                <td><button class="action-link">查看报告 ›</button></td>
+              </tr>
+              <tr>
+                <td><div class="fw-600">陈子轩</div><div class="text-xs text-muted">高一(3)班</div></td>
+                <td class="truncate" style="max-width:200px">现代文·孔乙己专项练习</td>
+                <td><span class="badge badge-info">现代文</span></td>
+                <td><span class="badge badge-danger">3.0/10</span></td>
+                <td class="text-muted text-xs">1 小时前</td>
+                <td><button class="action-link">查看报告 ›</button></td>
+              </tr>
+              <tr>
+                <td><div class="fw-600">刘思琪</div><div class="text-xs text-muted">高一(1)班</div></td>
+                <td class="truncate" style="max-width:200px">24年期中·诗歌鉴赏-饮酒</td>
+                <td><span class="badge badge-secondary">诗歌</span></td>
+                <td><span class="badge badge-success">9.0/10</span></td>
+                <td class="text-muted text-xs">2 小时前</td>
+                <td><button class="action-link">查看报告 ›</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-content -->
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+
+function authHeaders() {
+  const token = localStorage.getItem('yw_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+async function loadDashboard() {
+  try {
+    const res = await fetch(`${API_BASE}/api/stats/dashboard`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      renderDashboard(json.data);
+    }
+  } catch(err) {
+    console.log('Dashboard load error:', err);
+  }
+}
+
+function renderDashboard(stats) {
+  // Update stat cards
+  const statValues = document.querySelectorAll('.stat-card .stat-value');
+  if (statValues[0]) statValues[0].textContent = stats.totalCodes || 0;
+  if (statValues[1]) statValues[1].textContent = stats.activeCodes || 0;
+  if (statValues[2]) statValues[2].textContent = stats.totalDiagnoses || 0;
+  if (statValues[3]) statValues[3].textContent = stats.soonExhausted || 0;
+  if (statValues[4]) statValues[4].textContent = stats.exhaustedCodes || 0;
+
+  // Update last updated time
+  const now = new Date();
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  document.querySelector('.page-actions .text-muted').textContent = `数据更新于 ${timeStr}`;
+
+  // Render 7-day trend chart
+  renderTrendChart(stats.trend || []);
+
+  // Render score distribution
+  renderScoreDistribution(stats.scoreDistribution || { excellent: 0, good: 0, pass: 0, fail: 0, total: 0 });
+
+  // Update alerts section
+  updateAlerts(stats);
+}
+
+function renderTrendChart(trend) {
+  const container = document.querySelector('.card-body > div');
+  if (!container || !trend.length) return;
+
+  const maxCount = Math.max(...trend.map(t => t.count), 1);
+  const totalCount = trend.reduce((sum, t) => sum + t.count, 0);
+
+  container.innerHTML = trend.map(t => {
+    const heightPct = maxCount > 0 ? (t.count / maxCount) * 100 : 0;
+    return `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="height:${heightPct}%;width:100%;background:linear-gradient(180deg,#4F46E5 0%,#818CF8 100%);border-radius:6px 6px 0 0;position:relative;min-height:8px">
+          <span style="position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:600;color:#4F46E5">${t.count}</span>
+        </div>
+        <span style="font-size:11px;color:#94A3B8">${t.label}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderScoreDistribution(dist) {
+  const total = dist.total || 1;
+  const excellentPct = Math.round((dist.excellent / total) * 100);
+  const goodPct = Math.round((dist.good / total) * 100);
+  const passPct = Math.round((dist.pass / total) * 100);
+  const failPct = Math.round((dist.fail / total) * 100);
+
+  // Update distribution bars and percentages
+  const distSection = document.querySelector('.card-body').querySelectorAll('.progress');
+  if (distSection[0]) {
+    distSection[0].querySelector('.progress-bar').style.width = excellentPct + '%';
+    distSection[0].previousElementSibling.querySelector('.text-success').textContent = excellentPct + '%';
+  }
+  if (distSection[1]) {
+    distSection[1].querySelector('.progress-bar').style.width = goodPct + '%';
+    distSection[1].previousElementSibling.querySelector('.text-primary').textContent = goodPct + '%';
+  }
+  if (distSection[2]) {
+    distSection[2].querySelector('.progress-bar').style.width = passPct + '%';
+    distSection[2].previousElementSibling.querySelector('.text-warning').textContent = passPct + '%';
+  }
+  if (distSection[3]) {
+    distSection[3].querySelector('.progress-bar').style.width = failPct + '%';
+    distSection[3].previousElementSibling.querySelector('.text-danger').textContent = failPct + '%';
+  }
+
+  // Calculate avg score
+  const avgScore = total > 0
+    ? ((dist.excellent * 9 + dist.good * 7 + dist.pass * 5 + dist.fail * 2) / total).toFixed(1)
+    : '—';
+
+  // Update avg score display
+  const statDivs = document.querySelectorAll('.card-body .text-2xl');
+  if (statDivs[0]) statDivs[0].textContent = avgScore;
+}
+
+function updateAlerts(stats) {
+  // Update badge count
+  let alertCount = 0;
+  if (stats.exhaustedCodes > 0) alertCount++;
+  if (stats.soonExhausted > 0) alertCount++;
+
+  const badge = document.querySelector('.card-header .badge-danger');
+  if (badge) badge.textContent = alertCount + ' 项';
+
+  // Update first alert - exhausted codes
+  const alertItems = document.querySelectorAll('[style*="display:flex"][style*="align-items:center"]');
+  if (alertItems[0] && stats.exhaustedCodes > 0) {
+    const textEl = alertItems[0].querySelector('.fw-600');
+    if (textEl) textEl.textContent = `${stats.exhaustedCodes} 个邀请码已耗尽`;
+  }
+
+  // Update second alert - soon exhausted
+  if (alertItems[1] && stats.soonExhausted > 0) {
+    const textEl = alertItems[1].querySelector('.fw-600');
+    if (textEl) textEl.textContent = `${stats.soonExhausted} 个邀请码即将耗尽（≤2次）`;
+  }
+}
+
+// Refresh button
+function refreshDashboard() {
+  loadDashboard();
+  Toast.info('已刷新', '数据已更新');
+}
+
+// Export button
+function exportReport() {
+  Toast.info('导出中', '正在生成报表…');
+  setTimeout(() => Toast.success('导出完成', '报表已下载'), 800);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadDashboard();
+
+  // Attach handlers to buttons
+  const refreshBtn = document.querySelector('.btn-secondary.btn-sm');
+  if (refreshBtn) refreshBtn.onclick = refreshDashboard;
+
+  const exportBtn = document.querySelector('.btn-primary.btn-sm');
+  if (exportBtn) exportBtn.onclick = exportReport;
+});
+</script>

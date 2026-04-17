@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智能诊断舱 · 阅微 AI</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="student-layout">
+
+  <!-- Header -->
+  <header class="student-header">
+    <a href="submit.html" class="student-logo">
+      <div class="student-logo-icon">🏮</div>
+      <div>
+        <span class="student-logo-text">阅微 AI</span>
+        <span class="student-logo-sub">智能诊断系统</span>
+      </div>
+    </a>
+    <nav class="student-nav-links">
+      <a href="submit.html" class="student-nav-link active">智能诊断舱</a>
+      <a href="archive.html" class="student-nav-link">历史档案</a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="student-main">
+    <div class="student-card">
+
+      <!-- Form Side -->
+      <div class="student-form-side">
+        <div style="margin-bottom:var(--space-6)">
+          <h1 style="font-family:var(--font-serif);font-size:var(--text-2xl);font-weight:700;color:var(--color-slate-800);margin-bottom:var(--space-2)">
+            智能诊断舱
+          </h1>
+          <p class="text-sm" style="color:var(--color-slate-500)">
+            提交作答，AI 将进行逐句深度诊断，3-5 分钟生成完整报告
+          </p>
+        </div>
+
+        <form id="submit-form" onsubmit="handleSubmit(event)">
+          <!-- Identity -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="stu-name">姓名 / 昵称 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="stu-name" placeholder="请输入真实姓名" required autocomplete="name">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="stu-info">辅助标识 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="stu-info" placeholder="如：手机后四位" required>
+              <div class="form-hint">首次绑定后即锁定，不可更改</div>
+            </div>
+          </div>
+
+          <!-- Invite Code + Question -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)">
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="invite-code">邀请码 <span class="required">*</span></label>
+              <input type="text" class="form-input" id="invite-code" placeholder="老师发放的邀请码" required style="font-family:var(--font-mono)" autocomplete="off">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label class="form-label" for="question-select">选择题目 <span class="required">*</span></label>
+              <select class="form-select" id="question-select" required>
+                <option value="">请先输入邀请码…</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Answer -->
+          <div class="form-group">
+            <label class="form-label" for="stu-answer">我的原始作答 <span class="required">*</span></label>
+            <textarea class="form-textarea" id="stu-answer" rows="7" placeholder="将你手写的答案粘贴到这里，或直接打字输入…" required style="min-height:160px;font-size:var(--text-sm)"></textarea>
+            <div class="form-hint">请完整粘贴作答内容，AI 将逐句诊断</div>
+          </div>
+
+          <!-- Tips -->
+          <div style="background:var(--color-slate-50);border-radius:var(--radius-lg);padding:var(--space-4);margin-bottom:var(--space-5);display:flex;gap:var(--space-3);align-items:flex-start">
+            <span style="font-size:18px;flex-shrink:0;margin-top:1px">💡</span>
+            <div class="text-xs" style="color:var(--color-slate-500);line-height:1.7">
+              <b>诊断说明：</b>提交后 AI 将根据标准答案和采分点，对你的每一句话进行诊断。
+              诊断内容约 3-5 分钟生成，可前往「历史档案」查看。
+              请确保作答内容完整粘贴，否则会影响诊断准确性。
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" style="width:100%;padding:14px;font-size:var(--text-base)">
+            🚀 提交作答 · 开启智能诊断
+          </button>
+
+          <!-- Progress indicator (hidden by default) -->
+          <div id="progress-panel" style="display:none;margin-top:var(--space-4)">
+            <div style="background:var(--color-slate-50);border-radius:var(--radius-lg);padding:var(--space-4)">
+              <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">
+                <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
+                <span id="progress-text" class="fw-600 text-sm" style="color:var(--color-slate-700)">正在连接…</span>
+              </div>
+              <div class="progress" style="height:6px">
+                <div class="progress-bar" id="progress-bar" style="width:0%;transition:width 0.5s"></div>
+              </div>
+              <div class="text-xs text-muted" style="margin-top:var(--space-2)">
+                AI 批改预计需要 1-3 分钟，请勿关闭页面
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Info Side -->
+      <div class="student-info-side">
+        <div style="margin-bottom:var(--space-6)">
+          <div style="font-size:40px;margin-bottom:var(--space-3)">🏮</div>
+          <h2 style="font-family:var(--font-serif);font-size:var(--text-xl);font-weight:700;margin-bottom:var(--space-2)">
+            精准诊断，如师亲临
+          </h2>
+          <p style="font-size:var(--text-sm);opacity:0.8;line-height:1.7">
+            基于深度学习模型，逐句剖析你的作答逻辑，给出专业级的批改反馈
+          </p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">✓</div>
+            <div>
+              <div class="fw-600" style="margin-bottom:2px">逐句批注</div>
+              <div class="text-xs" style="opacity:0.7">精准标注每句话的正确与错误</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">✓</div>
+            <div>
+              <div class="fw-600" style="margin-bottom:2px">量化评分</div>
+              <div class="text-xs" style="opacity:0.7">按采分点精确到 0.5 分</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">✓</div>
+            <div>
+              <div class="fw-600" style="margin-bottom:2px">词汇升级</div>
+              <div class="text-xs" style="opacity:0.7">识别口语化表达，推荐高阶术语</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:var(--space-3);align-items:flex-start">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">✓</div>
+            <div>
+              <div class="fw-600" style="margin-bottom:2px">进步追踪</div>
+              <div class="text-xs" style="opacity:0.7">记录每次得分，量化学习轨迹</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:auto;padding-top:var(--space-6)">
+          <a href="archive.html" class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;width:100%;justify-content:center">
+            📂 查看我的历史报告
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="student-footer">
+    © 2026 阅微 AI 智能诊断系统 ·  Privacy Policy · Terms of Service
+  </footer>
+
+</body>
+</html>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+
+let pollTimer = null;
+
+// 加载题目列表（根据邀请码）
+async function loadQuestionsByCode(code) {
+  const select = document.getElementById('question-select');
+  if (!code || code.length < 4) {
+    select.innerHTML = '<option value="">请先输入邀请码…</option>';
+    return;
+  }
+
+  select.innerHTML = '<option value="">加载中…</option>';
+
+  try {
+    // 验证邀请码并获取对应题目
+    const res = await fetch(`${API_BASE}/api/codes/validate?code=${encodeURIComponent(code)}`);
+    const json = await res.json();
+
+    if (json.code === 0 && json.data) {
+      // 找到了匹配的题目
+      const question = json.data;
+      const typeLabel = question.type === 'poetry' ? '诗歌' : '现代文';
+      select.innerHTML = `
+        <option value="${question.id}">${typeLabel}｜${question.title}</option>
+      `;
+    } else {
+      select.innerHTML = '<option value="">邀请码无效或已过期</option>';
+    }
+  } catch(err) {
+    // 如果是公开接口问题，尝试直接显示题目（后台已实现公开题目列表）
+    try {
+      const res = await fetch(`${API_BASE}/api/questions?limit=50`);
+      const json = await res.json();
+      if (json.code === 0 && json.data.list.length > 0) {
+        const options = json.data.list.map(q => {
+          const typeLabel = q.type === 'poetry' ? '诗歌' : '现代文';
+          return `<option value="${q.id}">${typeLabel}｜${q.title}</option>`;
+        }).join('');
+        select.innerHTML = `<option value="">请选择题目…</option>${options}`;
+      } else {
+        select.innerHTML = '<option value="">题目加载失败</option>';
+      }
+    } catch(e) {
+      select.innerHTML = '<option value="">网络错误</option>';
+    }
+  }
+}
+
+// 监听邀请码输入
+document.getElementById('invite-code').addEventListener('input', function() {
+  const code = this.value.trim();
+  loadQuestionsByCode(code);
+});
+
+const progressStages = {
+  pending:     { pct: 10, text: '已提交，等待 AI 开始诊断…' },
+  processing:   { pct: 50, text: 'AI 正在深度分析您的作答…' },
+  completed:    { pct: 100, text: '诊断完成！' },
+  failed:      { pct: 0, text: '诊断失败' },
+};
+
+function updateProgress(status, message) {
+  const panel = document.getElementById('progress-panel');
+  const bar = document.getElementById('progress-bar');
+  const text = document.getElementById('progress-text');
+  if (!panel) return;
+
+  panel.style.display = 'block';
+  const info = progressStages[status] || { pct: 30, text: message || '处理中…' };
+  bar.style.width = info.pct + '%';
+  text.textContent = info.text;
+}
+
+function onDiagnosisComplete(task_id) {
+  Toast.success('诊断完成', '报告已生成，正在跳转到历史档案…');
+  // 存储最新报告的任务ID
+  localStorage.setItem('yw_last_task', task_id);
+  setTimeout(() => window.location.href = 'archive.html', 1500);
+}
+
+// Auto-fill from localStorage
+document.addEventListener('DOMContentLoaded', () => {
+  const savedName = localStorage.getItem('yw_name');
+  const savedInfo = localStorage.getItem('yw_info');
+  const savedCode = localStorage.getItem('yw_code');
+  if (savedName) document.getElementById('stu-name').value = savedName;
+  if (savedInfo) document.getElementById('stu-info').value = savedInfo;
+  if (savedCode) {
+    document.getElementById('invite-code').value = savedCode;
+    loadQuestionsByCode(savedCode);
+  }
+});
+
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('stu-name').value.trim();
+  const info = document.getElementById('stu-info').value.trim();
+  const code = document.getElementById('invite-code').value.trim();
+  const questionId = document.getElementById('question-select').value;
+  const answer = document.getElementById('stu-answer').value.trim();
+
+  if (!name || !info || !code || !questionId || !answer) {
+    Toast.warning('请完整填写所有字段');
+    return;
+  }
+
+  if (!questionId || questionId === '') {
+    Toast.warning('请选择题目');
+    return;
+  }
+
+  // 保存到 localStorage
+  localStorage.setItem('yw_name', name);
+  localStorage.setItem('yw_info', info);
+  localStorage.setItem('yw_code', code);
+
+  // 显示进度面板
+  const progressPanel = document.getElementById('progress-panel');
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> 提交中…';
+  updateProgress('pending', '正在提交…');
+
+  try {
+    const res = await fetch(`${API_BASE}/api/diagnosis`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        code,
+        question_id: parseInt(questionId),
+        answer,
+        info,
+      }),
+    });
+    const json = await res.json();
+
+    if (json.code === 0) {
+      btn.innerHTML = '✓ 提交成功！';
+      btn.className = 'btn btn-success btn-lg';
+      Toast.success('提交成功', 'AI 正在诊断中，预计需要 1-3 分钟…');
+
+      // 开始轮询状态
+      const taskId = json.data.task_id;
+      localStorage.setItem('yw_last_task', taskId);
+      startPolling(taskId);
+
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 提交作答 · 开启智能诊断';
+      Toast.error('提交失败', json.message || '请检查邀请码或网络连接');
+    }
+  } catch(err) {
+    btn.disabled = false;
+    btn.innerHTML = '🚀 提交作答 · 开启智能诊断';
+    Toast.error('网络错误', '无法连接到服务器，请检查网络后重试');
+  }
+}
+
+// 轮询诊断状态
+function startPolling(taskId) {
+  if (pollTimer) clearInterval(pollTimer);
+
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/diagnosis/status/${taskId}`);
+      const json = await res.json();
+
+      if (json.code === 0) {
+        const { status } = json.data;
+
+        if (status === 'completed') {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          updateProgress('completed', '诊断完成！');
+          onDiagnosisComplete(taskId);
+          return;
+        }
+
+        if (status === 'failed') {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          updateProgress('failed', '诊断失败，请稍后重试');
+          Toast.error('诊断失败', '系统繁忙，请稍后重试');
+          const btn = document.getElementById('submit-btn');
+          btn.disabled = false;
+          btn.innerHTML = '🚀 提交作答 · 开启智能诊断';
+          return;
+        }
+
+        updateProgress(status, 'AI 正在诊断…');
+      }
+    } catch(err) {
+      console.log('轮询错误:', err);
+    }
+  }, 3000); // 每 3 秒轮询一次
+
+  // 最多轮询 5 分钟
+  setTimeout(() => {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+      Toast.warning('诊断超时', '报告将在后台生成，可稍后到历史档案查看');
+    }
+  }, 300000);
+}
+</script>
+</body>
+</html>

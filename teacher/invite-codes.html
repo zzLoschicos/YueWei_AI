@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>邀请码管理 · 阅微 AI 诊断系统</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>.sidebar-toggle{display:none}@media(max-width:1024px){.sidebar-toggle{display:flex}}</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">阅</div>
+      <div>
+        <div class="logo-text">阅微 AI</div>
+        <span class="logo-sub">智能诊断系统</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">数据概览</div>
+        <a href="dashboard.html" class="nav-item">
+          <span class="nav-icon">📊</span><span class="nav-label">数据看板</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">教学管理</div>
+        <a href="invite-codes.html" class="nav-item active">
+          <span class="nav-icon">🎟</span><span class="nav-label">邀请码管理</span>
+        </a>
+        <a href="questions.html" class="nav-item">
+          <span class="nav-icon">📝</span><span class="nav-label">题目管理</span>
+        </a>
+        <a href="reports.html" class="nav-item">
+          <span class="nav-icon">📋</span><span class="nav-label">报告查看</span>
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">系统配置</div>
+        <a href="methodology.html" class="nav-item">
+          <span class="nav-icon">📖</span><span class="nav-label">方法论标准库</span>
+        </a>
+        <a href="settings.html" class="nav-item">
+          <span class="nav-icon">⚙</span><span class="nav-label">系统设置</span>
+        </a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">张</div>
+        <div class="user-info">
+          <div class="user-name">张明远</div>
+          <div class="user-role">语文教研组</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+
+    <header class="topbar">
+      <button class="topbar-btn sidebar-toggle btn-icon">
+        <span style="font-size:18px">☰</span>
+      </button>
+      <div class="breadcrumb">
+        <a href="dashboard.html" class="breadcrumb-item">首页</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item current">邀请码管理</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn btn-icon" data-tooltip="通知">🔔</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">邀请码管理</h1>
+          <p class="page-desc">批量生成、分发和管理学生访问码，支持实名绑定与模型配置</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="exportCSV()">
+            📤 导出 CSV
+          </button>
+          <button class="btn btn-primary" onclick="openCreateDrawer()">
+            + 新建邀请码
+          </button>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-search search-input-wrapper" style="max-width:300px">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-input" id="search-input" placeholder="搜索邀请码或姓名…" oninput="handleSearch(this.value)">
+        </div>
+        <div class="toolbar-filters">
+          <select class="form-select" id="filter-subject" onchange="handleFilter()" style="width:130px">
+            <option value="">全部科目</option>
+            <option value="诗歌">诗歌鉴赏</option>
+            <option value="现代文">现代文阅读</option>
+          </select>
+          <select class="form-select" id="filter-status" onchange="handleFilter()" style="width:130px">
+            <option value="">全部状态</option>
+            <option value="active">生效中</option>
+            <option value="exhausted">已耗尽</option>
+            <option value="inactive">未激活</option>
+          </select>
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="resetFilters()">
+            🔄 重置
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card" style="margin-top:var(--space-4)">
+        <div style="padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--color-slate-100);display:flex;align-items:center;justify-content:space-between">
+          <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);color:var(--color-slate-600);cursor:pointer">
+            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)">
+            全选
+            <span id="selected-count" class="text-muted"></span>
+          </label>
+          <div style="display:flex;gap:var(--space-2)">
+            <button class="btn btn-secondary btn-sm" id="batch-edit-btn" disabled onclick="openBatchEdit()">✏️ 批量编辑</button>
+            <button class="btn btn-danger btn-sm" id="batch-delete-btn" disabled onclick="batchDelete()">🗑 批量删除</button>
+          </div>
+        </div>
+
+        <div id="codes-table"></div>
+
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+
+let allCodes = [];
+let filteredData = [];
+let selectedRows = [];
+let pagination;
+let currentPage = 1;
+const PAGE_SIZE = 10;
+
+// Auth header
+function authHeaders() {
+  const token = localStorage.getItem('yw_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+// Load codes from API
+async function loadCodes() {
+  try {
+    const res = await fetch(`${API_BASE}/api/codes?limit=100`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      allCodes = json.data.list.map(c => ({
+        id: c.id,
+        code: c.code,
+        studentName: c.student_name || '未激活',
+        stuInfo: c.student_info || '',
+        subject: c.question_title || '',
+        used: c.used_count || 0,
+        max: c.max_uses || 1,
+        model: c.model || 'deepseek-chat',
+        bindTime: c.bound_at ? new Date(c.bound_at).toLocaleString('zh-CN') : '',
+        status: c.status === 'active' ? 'active' : c.used_count >= c.max_uses ? 'exhausted' : 'inactive',
+        raw: c
+      }));
+      applyFilters();
+    }
+  } catch(err) {
+    Toast.error('网络错误', '无法加载邀请码数据');
+  }
+}
+
+function applyFilters() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const subject = document.getElementById('filter-subject').value;
+  const status = document.getElementById('filter-status').value;
+
+  filteredData = allCodes.filter(c => {
+    if (subject && !c.subject.includes(subject)) return false;
+    if (status && c.status !== status) return false;
+    if (search && !c.code.toLowerCase().includes(search) && !c.studentName.includes(search)) return false;
+    return true;
+  });
+
+  currentPage = 1;
+  pagination.setTotal(filteredData.length);
+  renderTable(1);
+}
+
+const columns = [
+  { key:'code', label:'邀请码', render:(v) => `<code style="font-family:var(--font-mono);font-size:var(--text-sm);color:var(--color-primary)">${v}</code>` },
+  {
+    key:'studentName', label:'绑定人',
+    render:(v, row) => v === '未激活'
+      ? `<span class="text-muted italic">— 未激活 —</span>`
+      : `<div class="fw-600">${v}</div><div class="text-xs text-muted">${row.stuInfo || ''}</div>`,
+  },
+  { key:'subject', label:'科目', render:(v) => v.includes('诗歌') ? '<span class="badge badge-secondary">诗歌鉴赏</span>' : '<span class="badge badge-info">现代文阅读</span>' },
+  {
+    key:'used', label:'使用情况',
+    render:(used, row) => {
+      const pct = row.max > 0 ? used / row.max : 0;
+      const cls = pct >= 1 ? 'danger' : pct >= 0.8 ? 'warning' : 'success';
+      return `<div style="display:flex;align-items:center;gap:8px;min-width:120px">
+        <div class="progress" style="flex:1"><div class="progress-bar ${cls}" style="width:${pct*100}%"></div></div>
+        <span class="fw-600" style="font-size:var(--text-xs);white-space:nowrap">${used}/${row.max}</span>
+      </div>`;
+    }
+  },
+  {
+    key:'status', label:'状态',
+    render:(v) => {
+      const map = { active:'badge-success', exhausted:'badge-danger', inactive:'badge-neutral' };
+      const label = { active:'生效中', exhausted:'已耗尽', inactive:'未激活' };
+      return `<span class="badge ${map[v]} badge-dot">${label[v]}</span>`;
+    }
+  },
+  { key:'model', label:'模型', render:(v) => v.includes('reasoner') ? '<span class="badge badge-warning">R1</span>' : '<span class="badge badge-neutral">V3</span>' },
+  { key:'bindTime', label:'激活时间', render:(v) => v || '—' },
+];
+
+const actions = [
+  { key:'edit', label:'编辑', class:'text-primary', onClick:(row) => openEditDrawer(row) },
+  { key:'unbind', label:'解绑', onClick:(row) => handleUnbind(row) },
+  { key:'delete', label:'删除', class:'danger', onClick:(row) => handleDelete(row) },
+];
+
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  pagination = new Pagination({
+    container: document.getElementById('pagination'),
+    initialPage: 1,
+    limit: PAGE_SIZE,
+    total: 0,
+    onChange: (page) => renderTable(page),
+  });
+  loadCodes();
+});
+
+function renderTable(page) {
+  const start = (page - 1) * PAGE_SIZE;
+  const pageData = filteredData.slice(start, start + PAGE_SIZE);
+
+  pagination.total = filteredData.length;
+  pagination.currentPage = page;
+  pagination.render();
+
+  const table = new DataTable({
+    container: document.getElementById('codes-table'),
+    columns,
+    data: pageData,
+    actions,
+    selectable: true,
+    emptyText: '暂无邀请码数据',
+    onSelectionChange: (rows) => {
+      selectedRows = rows;
+      updateBatchBtn();
+    },
+  });
+}
+
+function updateBatchBtn() {
+  const count = selectedRows.length;
+  document.getElementById('selected-count').textContent = count > 0 ? `已选 ${count} 项` : '';
+  document.getElementById('batch-edit-btn').disabled = count === 0;
+  document.getElementById('batch-delete-btn').disabled = count === 0;
+}
+
+function toggleSelectAll(el) {
+  document.querySelectorAll('.row-check').forEach(cb => cb.checked = el.checked);
+  selectedRows = el.checked ? [...filteredData] : [];
+  updateBatchBtn();
+}
+
+function handleSearch(val) {
+  applyFilters();
+}
+
+function handleFilter() {
+  applyFilters();
+}
+
+function resetFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-subject').value = '';
+  document.getElementById('filter-status').value = '';
+  applyFilters();
+}
+
+// ── Drawer ────────────────────────────────────────────────
+function openCreateDrawer() {
+  const drawer = Drawer.show({
+    title: '新建邀请码',
+    width: '480px',
+    content: `
+      <div class="form-group">
+        <label class="form-label" id="label-mode">生成方式</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+          <div class="card" style="padding:var(--space-4);cursor:pointer;border:2px solid var(--color-primary);background:var(--color-primary-light)" id="mode-random" onclick="setMode('random')" role="button" tabindex="0" aria-pressed="true">
+            <div style="font-size:20px;margin-bottom:var(--space-2)">🎲</div>
+            <div class="fw-600">随机生成</div>
+            <div class="text-xs text-muted">系统随机分配码值</div>
+          </div>
+          <div class="card" style="padding:var(--space-4);cursor:pointer;border:2px solid var(--color-slate-200)" id="mode-named" onclick="setMode('named')" role="button" tabindex="0" aria-pressed="false">
+            <div style="font-size:20px;margin-bottom:var(--space-2)">📋</div>
+            <div class="fw-600">实名绑定</div>
+            <div class="text-xs text-muted">粘贴名单预绑定姓名</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="random-config">
+        <div class="form-group">
+          <label class="form-label" for="create-question">关联题目 <span class="required">*</span></label>
+          <select class="form-select" id="create-question">
+            <option value="">请选择题目</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="create-count">生成数量</label>
+          <input type="number" class="form-input" id="create-count" placeholder="如：50" min="1" max="50" value="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="create-max">可用次数 <span class="required">*</span></label>
+          <input type="number" class="form-input" id="create-max" placeholder="如：10" min="1" value="10">
+        </div>
+      </div>
+
+      <div id="named-config" style="display:none">
+        <div class="form-group">
+          <label class="form-label" for="create-named-question">关联题目 <span class="required">*</span></label>
+          <select class="form-select" id="create-named-question">
+            <option value="">请选择题目</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="create-names">学生名单 <span class="text-muted">(每行一个姓名)</span></label>
+          <textarea class="form-textarea" id="create-names" rows="5" placeholder="李明轩&#10;王思涵&#10;张雨萱"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="create-named-max">可用次数</label>
+          <input type="number" class="form-input" id="create-named-max" placeholder="10" min="1" value="10">
+        </div>
+      </div>
+
+      <fieldset style="border:none;padding:0;margin:0">
+        <legend class="form-label">AI 模型</legend>
+        <div style="display:flex;gap:var(--space-3)">
+          <label class="form-check">
+            <input type="radio" name="create-model" value="deepseek-chat" checked>
+            <span class="fw-500">标准大脑 (V3)</span>
+            <span class="text-xs text-muted" style="margin-left:4px">响应快</span>
+          </label>
+          <label class="form-check">
+            <input type="radio" name="create-model" value="deepseek-reasoner">
+            <span class="fw-500">推理大脑 (R1)</span>
+            <span class="text-xs text-muted" style="margin-left:4px">更精准</span>
+          </label>
+        </div>
+      </fieldset>
+    `,
+  });
+
+  // Load questions for the dropdowns
+  loadQuestionsForSelect();
+
+  Drawer.setFooter(`
+    <button class="btn btn-secondary" onclick="Drawer.hide()">取消</button>
+    <button class="btn btn-primary" onclick="handleCreate()">立即生成</button>
+  `);
+}
+
+async function loadQuestionsForSelect() {
+  try {
+    const res = await fetch(`${API_BASE}/api/questions?limit=100`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      const options = json.data.list.map(q =>
+        `<option value="${q.id}">${q.title}</option>`
+      ).join('');
+      document.getElementById('create-question').innerHTML = `<option value="">请选择题目</option>${options}`;
+      document.getElementById('create-named-question').innerHTML = `<option value="">请选择题目</option>${options}`;
+    }
+  } catch(e) {}
+}
+
+let currentMode = 'random';
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('random-config').style.display  = mode === 'random' ? 'block' : 'none';
+  document.getElementById('named-config').style.display    = mode === 'named'  ? 'block' : 'none';
+  document.getElementById('mode-random').style.borderColor = mode === 'random' ? 'var(--color-primary)' : 'var(--color-slate-200)';
+  document.getElementById('mode-random').style.background = mode === 'random' ? 'var(--color-primary-light)' : '#fff';
+  document.getElementById('mode-named').style.borderColor  = mode === 'named'  ? 'var(--color-primary)' : 'var(--color-slate-200)';
+  document.getElementById('mode-named').style.background    = mode === 'named'  ? 'var(--color-primary-light)' : '#fff';
+}
+
+async function handleCreate() {
+  const questionId = currentMode === 'random'
+    ? document.getElementById('create-question').value
+    : document.getElementById('create-named-question').value;
+
+  if (!questionId) {
+    Toast.warning('请选择关联题目');
+    return;
+  }
+
+  const model = document.querySelector('input[name="create-model"]:checked').value;
+
+  if (currentMode === 'random') {
+    const count = parseInt(document.getElementById('create-count').value) || 10;
+    const max = parseInt(document.getElementById('create-max').value) || 10;
+
+    if (count <= 0 || count > 50) {
+      Toast.warning('生成数量需在 1-50 之间');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/codes/batch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ question_id: parseInt(questionId), count, max_uses: max })
+      });
+      const json = await res.json();
+      if (json.code === 0) {
+        Toast.success('生成成功', `已创建 ${count} 个邀请码`);
+        Drawer.hide();
+        loadCodes();
+      } else {
+        Toast.error('生成失败', json.message);
+      }
+    } catch(e) {
+      Toast.error('网络错误', '无法创建邀请码');
+    }
+  } else {
+    const names = document.getElementById('create-names').value.trim();
+    if (!names) {
+      Toast.warning('请输入学生名单');
+      return;
+    }
+    const list = names.split('\n').filter(n => n.trim());
+    const max = parseInt(document.getElementById('create-named-max').value) || 10;
+
+    try {
+      // Create one code per student
+      for (const name of list) {
+        await fetch(`${API_BASE}/api/codes`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ question_id: parseInt(questionId), max_uses: max })
+        });
+      }
+      Toast.success('生成成功', `已为 ${list.length} 名学生生成邀请码`);
+      Drawer.hide();
+      loadCodes();
+    } catch(e) {
+      Toast.error('网络错误', '无法创建邀请码');
+    }
+  }
+}
+
+function openEditDrawer(row) {
+  const drawer = Drawer.show({
+    title: '编辑邀请码',
+    width: '480px',
+    content: `
+      <div class="form-group">
+        <label class="form-label">邀请码</label>
+        <input type="text" class="form-input" value="${row.code}" disabled style="background:var(--color-slate-50);color:var(--color-slate-400)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">已用 / 可用次数</label>
+        <div style="display:flex;align-items:center;gap:var(--space-3)">
+          <span class="fw-600">${row.used}</span>
+          <span class="text-muted">/</span>
+          <input type="number" class="form-input" id="edit-max" value="${row.max}" min="1" style="width:100px">
+          <span class="text-muted">次</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">AI 模型</label>
+        <select class="form-select" id="edit-model">
+          <option value="deepseek-chat" ${!row.model.includes('reasoner')?'selected':''}>标准大脑 (V3)</option>
+          <option value="deepseek-reasoner" ${row.model.includes('reasoner')?'selected':''}>推理大脑 (R1)</option>
+        </select>
+      </div>
+    `,
+  });
+
+  Drawer.setFooter(`
+    <button class="btn btn-secondary" onclick="Drawer.hide()">取消</button>
+    <button class="btn btn-primary" onclick="saveEdit(${row.id})">保存修改</button>
+  `);
+}
+
+async function saveEdit(id) {
+  const max = parseInt(document.getElementById('edit-max').value);
+  const model = document.getElementById('edit-model').value;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/codes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify({ max_uses: max })
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      Toast.success('保存成功', '邀请码已更新');
+      Drawer.hide();
+      loadCodes();
+    } else {
+      Toast.error('保存失败', json.message);
+    }
+  } catch(e) {
+    Toast.error('网络错误', '无法保存修改');
+  }
+}
+
+async function handleUnbind(row) {
+  const ok = await Modal.confirm({
+    title: '确认解绑',
+    message: `确定要解除 <b>${row.code}</b> 的绑定吗？`,
+    confirmText: '确认解绑',
+    danger: true,
+  });
+  if (ok) {
+    try {
+      const res = await fetch(`${API_BASE}/api/codes/${row.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify({ status: 'inactive' })
+      });
+      const json = await res.json();
+      if (json.code === 0) {
+        Toast.success('已解绑', `邀请码 ${row.code} 已解除绑定`);
+        loadCodes();
+      } else {
+        Toast.error('解绑失败', json.message);
+      }
+    } catch(e) {
+      Toast.error('网络错误', '无法解绑');
+    }
+  }
+}
+
+async function handleDelete(row) {
+  const ok = await Modal.confirm({
+    title: '确认删除',
+    message: `确定要永久删除邀请码 <b>${row.code}</b> 吗？此操作不可恢复。`,
+    confirmText: '确认删除',
+    danger: true,
+  });
+  if (ok) {
+    try {
+      const res = await fetch(`${API_BASE}/api/codes/${row.id}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      const json = await res.json();
+      if (json.code === 0) {
+        Toast.success('已删除', `邀请码 ${row.code} 已永久删除`);
+        loadCodes();
+      } else {
+        Toast.error('删除失败', json.message);
+      }
+    } catch(e) {
+      Toast.error('网络错误', '无法删除');
+    }
+  }
+}
+
+function openBatchEdit() {
+  Toast.info('批量编辑', `已选 ${selectedRows.length} 个邀请码`);
+}
+
+async function batchDelete() {
+  const ok = await Modal.confirm({
+    title: '批量删除',
+    message: `确定要删除选中的 <b>${selectedRows.length}</b> 个邀请码吗？此操作不可恢复。`,
+    confirmText: '确认删除',
+    danger: true,
+  });
+  if (ok) {
+    let success = 0, failed = 0;
+    for (const row of selectedRows) {
+      try {
+        const res = await fetch(`${API_BASE}/api/codes/${row.id}`, {
+          method: 'DELETE',
+          headers: authHeaders()
+        });
+        if (res.ok) success++;
+        else failed++;
+      } catch(e) { failed++; }
+    }
+    Toast.success('已删除', `${success} 个邀请码已删除${failed > 0 ? `，${failed} 个失败` : ''}`);
+    loadCodes();
+  }
+}
+
+function exportCSV() {
+  if (filteredData.length === 0) {
+    Toast.warning('无数据可导出');
+    return;
+  }
+  const headers = ['邀请码', '绑定人', '科目', '已用/可用', '状态', '模型', '激活时间'];
+  const rows = filteredData.map(c => [
+    c.code, c.studentName, c.subject, `${c.used}/${c.max}`,
+    c.status === 'active' ? '生效中' : c.status === 'exhausted' ? '已耗尽' : '未激活',
+    c.model.includes('reasoner') ? 'R1' : 'V3', c.bindTime || '—'
+  ]);
+  const csvContent = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `invite-codes-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  Toast.success('导出完成', 'CSV 文件已下载');
+}
+</script>
+</body>
+</html>

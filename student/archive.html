@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>历史档案库 · 阅微 AI</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="student-layout">
+
+  <!-- Header -->
+  <header class="student-header">
+    <a href="submit.html" class="student-logo">
+      <div class="student-logo-icon">🏮</div>
+      <div>
+        <span class="student-logo-text">阅微 AI</span>
+        <span class="student-logo-sub">智能诊断系统</span>
+      </div>
+    </a>
+    <nav class="student-nav-links">
+      <a href="submit.html" class="student-nav-link">智能诊断舱</a>
+      <a href="archive.html" class="student-nav-link active">历史档案</a>
+    </nav>
+  </header>
+
+  <!-- Main -->
+  <main class="student-main" style="align-items:flex-start;padding-top:var(--space-8)">
+    <div style="width:100%;max-width:1000px">
+
+      <!-- Identity Bar -->
+      <div class="card" style="margin-bottom:var(--space-5)">
+        <div class="card-body" style="padding:var(--space-5) var(--space-6);display:flex;align-items:center;gap:var(--space-4)">
+          <div style="flex:1">
+            <div class="text-sm text-muted mb-1">当前身份</div>
+            <div class="fw-700" style="font-size:var(--text-lg)" id="current-user">—</div>
+          </div>
+          <div class="search-input-wrapper" style="flex:2">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-input" id="archive-code" placeholder="请输入你的邀请码…" style="padding-left:38px">
+          </div>
+          <button class="btn btn-primary" onclick="loadArchives()">
+            查询我的档案
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="clearArchives()">清空</button>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="archive-results">
+
+        <!-- Empty State -->
+        <div id="empty-state" class="card">
+          <div class="empty-state">
+            <div class="empty-icon" style="font-size:64px">📂</div>
+            <div class="empty-title">暂无历史报告</div>
+            <div class="empty-desc">
+              输入邀请码后即可查看所有历史诊断报告。<br>
+              首次提交后约 3-5 分钟生成报告。
+            </div>
+            <a href="submit.html" class="btn btn-primary">
+              🚀 去提交新诊断
+            </a>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="card" style="display:none">
+          <div class="empty-state">
+            <div style="display:flex;gap:8px;margin-bottom:var(--space-4)">
+              <div class="skeleton" style="width:12px;height:12px;border-radius:50%"></div>
+              <div class="skeleton" style="width:12px;height:12px;border-radius:50%;animation-delay:0.2s"></div>
+              <div class="skeleton" style="width:12px;height:12px;border-radius:50%;animation-delay:0.4s"></div>
+            </div>
+            <div class="empty-title">正在检索档案…</div>
+          </div>
+        </div>
+
+        <!-- Archive Grid -->
+        <div id="archive-grid" style="display:none"></div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="student-footer">
+    © 2026 阅微 AI 智能诊断系统 ·  Privacy Policy · Terms of Service
+  </footer>
+
+</body>
+</html>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+let allArchives = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedName = localStorage.getItem('yw_name');
+  const savedCode = localStorage.getItem('yw_code');
+  if (savedName) document.getElementById('current-user').textContent = savedName;
+  if (savedCode) document.getElementById('archive-code').value = savedCode;
+  if (savedCode && savedName) loadArchives();
+});
+
+async function loadArchives() {
+  const name = document.getElementById('current-user').textContent.trim();
+  const code = document.getElementById('archive-code').value.trim();
+
+  if (!name || !code) {
+    Toast.warning('请确保姓名和邀请码已填写');
+    return;
+  }
+
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('loading-state').style.display = 'flex';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/reports/my/${encodeURIComponent(code)}`);
+    const json = await res.json();
+
+    document.getElementById('loading-state').style.display = 'none';
+
+    if (json.code === 0) {
+      allArchives = json.data.map(r => ({
+        id: r.id,
+        title: r.question_title || '未知题目',
+        score: r.score || 0,
+        maxScore: 10,
+        status: r.status,
+        submittedAt: r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '—',
+        studentName: r.student_name,
+        raw: r
+      }));
+
+      if (allArchives.length === 0) {
+        document.getElementById('empty-state').style.display = 'flex';
+        Toast.info('暂无报告', '当前邀请码下没有诊断报告');
+      } else {
+        renderArchiveGrid(allArchives);
+      }
+    } else {
+      document.getElementById('empty-state').style.display = 'flex';
+      Toast.error('查询失败', json.message || '无法获取报告列表');
+    }
+  } catch(err) {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'flex';
+    Toast.error('网络错误', '无法连接到服务器');
+  }
+}
+
+function clearArchives() {
+  document.getElementById('archive-grid').style.display = 'none';
+  document.getElementById('empty-state').style.display = 'flex';
+  allArchives = [];
+}
+
+function renderArchiveGrid(archives) {
+  const container = document.getElementById('archive-grid');
+  container.style.display = 'block';
+
+  const completedOnes = archives.filter(a => a.status === 'completed');
+  const compareBtn = completedOnes.length >= 2
+    ? `<button class="btn btn-secondary btn-sm" onclick="openCompareView()">📊 对比报告</button>`
+    : '';
+
+  container.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-4)">
+      <div class="text-sm text-muted">
+        共找到 <span class="fw-700 text-primary">${archives.length}</span> 份诊断报告
+      </div>
+      <div style="display:flex;gap:var(--space-3);align-items:center">
+        <select class="form-select" style="width:140px;font-size:var(--text-xs)" onchange="sortArchives(this.value)">
+          <option value="time-desc">⏰ 最新优先</option>
+          <option value="time-asc">⏰ 从早到晚</option>
+          <option value="score-desc">📊 得分从高到低</option>
+          <option value="score-asc">📊 得分从低到高</option>
+        </select>
+        ${compareBtn}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-4)">
+      ${archives.map((a, idx) => {
+        const scorePct = a.maxScore > 0 ? (a.score / a.maxScore) * 100 : 0;
+        const scoreColor = scorePct >= 80 ? 'success' : scorePct >= 60 ? 'warning' : 'danger';
+        const isCompleted = a.status === 'completed';
+        const isSelected = selectedForCompare.includes(a.id);
+
+        return `
+          <div class="card archive-card ${isSelected ? 'selected-for-compare' : ''}" onclick="toggleCompareSelect(${a.id}, ${idx})" style="cursor:pointer;transition:all 0.2s;${isSelected ? 'border-color:var(--color-primary);box-shadow:0 0 0 2px var(--color-primary-light)' : ''}">
+            ${isCompleted ? `
+            <div style="position:absolute;top:12px;right:12px">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleCompareSelect(${a.id}, ${idx})" style="width:18px;height:18px;cursor:pointer">
+            </div>
+            ` : ''}
+            <div class="card-body" style="padding:var(--space-5)">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3)">
+                <span class="badge ${isCompleted ? 'badge-success' : 'badge-warning'}">${isCompleted ? '已完成' : '处理中'}</span>
+                <span class="text-xs text-muted">${a.submittedAt}</span>
+              </div>
+              <h3 class="fw-600 mb-3" style="font-size:var(--text-sm);color:var(--color-slate-800);line-height:1.5">${a.title}</h3>
+              ${isCompleted ? `
+              <div style="display:flex;align-items:center;gap:var(--space-4);margin-bottom:var(--space-4)">
+                <div style="position:relative;width:64px;height:64px">
+                  <svg width="64" height="64" style="transform:rotate(-90deg)">
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="var(--color-slate-100)" stroke-width="6"/>
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="var(--color-${scoreColor})" stroke-width="6"
+                      stroke-dasharray="${2 * Math.PI * 28}" stroke-dashoffset="${2 * Math.PI * 28 * (1 - scorePct / 100)}" stroke-linecap="round"/>
+                  </svg>
+                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <span class="fw-700" style="font-size:var(--text-lg);line-height:1;font-family:var(--font-inter)">${a.score}</span>
+                    <span class="text-xs text-muted" style="line-height:1">/${a.maxScore}</span>
+                  </div>
+                </div>
+                <div style="flex:1">
+                  <div class="text-sm fw-600" style="color:var(--color-${scoreColor})">${scorePct >= 80 ? '优秀' : scorePct >= 60 ? '良好' : scorePct >= 40 ? '及格' : '待提升'}</div>
+                  <div class="text-xs text-muted">得分率 ${Math.round(scorePct)}%</div>
+                  <div class="progress" style="height:6px;margin-top:6px">
+                    <div class="progress-bar text-${scoreColor}" style="width:${scorePct}%"></div>
+                  </div>
+                </div>
+              </div>
+              ` : `
+              <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-3);background:var(--color-slate-50);border-radius:var(--radius-md);margin-bottom:var(--space-4)">
+                <div class="spinner" style="width:20px;height:20px;border-width:2px"></div>
+                <span class="text-sm text-muted">报告生成中，请稍候…</span>
+              </div>
+              `}
+            </div>
+            <div class="card-footer" style="padding:var(--space-3) var(--space-5);display:flex;justify-content:space-between;align-items:center">
+              <span class="text-xs text-primary fw-500" style="cursor:pointer" onclick="event.stopPropagation();openReport(${a.id})">${isCompleted ? '查看深度报告 ›' : '等待生成 ›'}</span>
+              ${isCompleted ? `<span class="text-xs text-muted">选择对比</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+let selectedForCompare = [];
+
+function toggleCompareSelect(id, idx) {
+  const archive = allArchives.find(a => a.id === id);
+  if (!archive || archive.status !== 'completed') return;
+
+  const pos = selectedForCompare.indexOf(id);
+  if (pos > -1) {
+    selectedForCompare.splice(pos, 1);
+  } else if (selectedForCompare.length < 4) {
+    selectedForCompare.push(id);
+  } else {
+    Toast.warning('最多选择 4 份报告进行对比');
+    return;
+  }
+  renderArchiveGrid(getSortedArchives());
+}
+
+function openCompareView() {
+  if (selectedForCompare.length < 2) {
+    Toast.warning('请至少选择 2 份报告进行对比');
+    return;
+  }
+
+  // Fetch details for all selected
+  Promise.all(selectedForCompare.map(id =>
+    fetch(`${API_BASE}/api/reports/${id}`).then(r => r.json())
+  )).then(results => {
+    const reports = results.filter(r => r.code === 0).map(r => r.data);
+    if (reports.length < 2) {
+      Toast.error('对比失败', '无法获取足够的报告数据');
+      return;
+    }
+    showCompareModal(reports);
+  }).catch(() => {
+    Toast.error('网络错误', '无法获取报告数据进行对比');
+  });
+}
+
+function showCompareModal(reports) {
+  const avgScore = (reports.reduce((s, r) => s + (r.score || 0), 0) / reports.length).toFixed(1);
+  const avgPct = Math.round((avgScore / 10) * 100);
+
+  Modal.show({
+    title: `📊 报告对比 · ${reports.length} 份报告`,
+    size: 'xl',
+    content: `
+      <div style="margin-bottom:var(--space-5)">
+        <div style="display:grid;grid-template-columns:repeat(${reports.length},1fr);gap:var(--space-4);margin-bottom:var(--space-4)">
+          ${reports.map(r => {
+            const pct = Math.round((r.score || 0) / 10 * 100);
+            const color = pct >= 80 ? 'success' : pct >= 60 ? 'warning' : 'danger';
+            return `
+              <div class="card" style="text-align:center">
+                <div class="card-body" style="padding:var(--space-4)">
+                  <div class="text-sm text-muted mb-2">${r.question_title || '未知题目'}</div>
+                  <div style="position:relative;width:72px;height:72px;margin:0 auto var(--space-3)">
+                    <svg width="72" height="72" style="transform:rotate(-90deg)">
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="var(--color-slate-100)" stroke-width="6"/>
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="var(--color-${color})" stroke-width="6"
+                        stroke-dasharray="${2 * Math.PI * 30}" stroke-dashoffset="${2 * Math.PI * 30 * (1 - pct / 100)}" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                      <span class="fw-700" style="font-size:var(--text-lg);line-height:1;font-family:var(--font-inter)">${r.score || 0}</span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-muted">${r.created_at ? new Date(r.created_at).toLocaleDateString('zh-CN') : ''}</div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div class="card" style="margin-bottom:var(--space-4)">
+          <div class="card-header"><div class="card-title" style="font-size:var(--text-sm)">📝 总评对比</div></div>
+          <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+            <div style="display:grid;grid-template-columns:repeat(${reports.length},1fr);gap:var(--space-4)">
+              ${reports.map(r => `
+                <div class="text-sm" style="color:var(--color-slate-600);line-height:1.7">${r.overall_comment || '暂无总评'}</div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        ${reports.some(r => r.details?.length > 0) ? `
+        <div class="card" style="margin-bottom:var(--space-4)">
+          <div class="card-header"><div class="card-title" style="font-size:var(--text-sm)">💡 逐句批注对比</div></div>
+          <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+            <div style="display:grid;grid-template-columns:repeat(${reports.length},1fr);gap:var(--space-4)">
+              ${reports.map(r => `
+                <div>
+                  ${(r.details || []).slice(0, 3).map((d, i) => `
+                    <div style="margin-bottom:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-slate-100)">
+                      <div class="text-xs fw-600 mb-1" style="color:var(--color-slate-700)">"${d.sentence || ''}"</div>
+                      <div class="text-xs mb-1" style="color:var(--color-slate-500)">${d.comment || ''}</div>
+                      <span class="badge ${d.score >= 2 ? 'badge-success' : d.score >= 1 ? 'badge-warning' : 'badge-danger'}">+${d.score || 0}分</span>
+                    </div>
+                  `).join('')}
+                  ${(r.details || []).length === 0 ? '<div class="text-xs text-muted">暂无批注</div>' : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+
+        ${reports.some(r => r.suggestions?.length > 0) ? `
+        <div class="card">
+          <div class="card-header"><div class="card-title" style="font-size:var(--text-sm)">🎯 改进建议</div></div>
+          <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+            <div style="display:grid;grid-template-columns:repeat(${reports.length},1fr);gap:var(--space-4)">
+              ${reports.map(r => `
+                <ul style="margin:0;padding-left:var(--space-4)">
+                  ${(r.suggestions || []).map(s => `<li class="text-sm mb-2" style="color:var(--color-slate-600);line-height:1.6">${s}</li>`).join('')}
+                  ${(r.suggestions || []).length === 0 ? '<li class="text-xs text-muted">暂无建议</li>' : ''}
+                </ul>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        ` : ''}
+      </div>
+    `,
+    footer: `<button class="btn btn-secondary" onclick="Modal.hide()" style="width:100%">关闭</button>`,
+  });
+}
+
+function getSortedArchives() {
+  const sortSelect = document.querySelector('#archive-grid select');
+  const criteria = sortSelect ? sortSelect.value : 'time-desc';
+  const sorted = [...allArchives];
+  if (criteria === 'time-asc') sorted.reverse();
+  if (criteria === 'score-desc') sorted.sort((a,b) => parseFloat(b.score) - parseFloat(a.score));
+  if (criteria === 'score-asc') sorted.sort((a,b) => parseFloat(a.score) - parseFloat(b.score));
+  return sorted;
+}
+
+function sortArchives(criteria) {
+  const sorted = [...allArchives];
+  if (criteria === 'time-asc') sorted.reverse();
+  if (criteria === 'score-desc') sorted.sort((a,b) => parseFloat(b.score) - parseFloat(a.score));
+  if (criteria === 'score-asc') sorted.sort((a,b) => parseFloat(a.score) - parseFloat(b.score));
+  renderArchiveGrid(sorted);
+}
+
+async function openReport(id) {
+  const archive = allArchives.find(a => a.id === id);
+  if (!archive) return;
+
+  if (archive.status !== 'completed') {
+    Toast.info('报告生成中', '请稍后再查看详细报告');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/reports/${id}`);
+    const json = await res.json();
+
+    if (json.code === 0) {
+      showReportModal(json.data);
+    } else {
+      Toast.error('获取失败', json.message);
+    }
+  } catch(err) {
+    Toast.error('网络错误', '无法获取报告详情');
+  }
+}
+
+function showReportModal(report) {
+  const scorePct = report.score || 0;
+  const scoreColor = scorePct >= 80 ? 'success' : scorePct >= 60 ? 'warning' : 'danger';
+  const suggestions = Array.isArray(report.suggestions) ? report.suggestions : [];
+  const details = Array.isArray(report.details) ? report.details : [];
+
+  Modal.show({
+    title: `📋 诊断报告 · ${report.question_title || '详细报告'}`,
+    size: 'xl',
+    content: `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)">
+        <div class="stat-card primary" style="padding:var(--space-4)">
+          <div style="font-size:var(--text-3xl);font-weight:700;font-family:var(--font-inter)">${report.score || 0}<span style="font-size:var(--text-lg);color:var(--color-slate-400)">/100</span></div>
+          <div class="text-sm text-muted">综合得分</div>
+        </div>
+        <div class="stat-card ${scoreColor}" style="padding:var(--space-4)">
+          <div style="font-size:var(--text-3xl);font-weight:700;font-family:var(--font-inter)">${report.student_name}</div>
+          <div class="text-sm text-muted">学生姓名</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:var(--space-4)">
+        <div class="card-header" style="padding:var(--space-3) var(--space-5)"><div class="card-title" style="font-size:var(--text-sm)">📝 总评</div></div>
+        <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+          <div class="text-sm" style="color:var(--color-slate-600);line-height:1.8">${report.overall_comment || '暂无总评'}</div>
+        </div>
+      </div>
+      ${details.length > 0 ? `
+      <div class="card" style="margin-bottom:var(--space-4)">
+        <div class="card-header" style="padding:var(--space-3) var(--space-5)"><div class="card-title" style="font-size:var(--text-sm)">💡 逐句批注</div></div>
+        <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+          ${details.map(d => `
+            <div style="margin-bottom:var(--space-4);padding-bottom:var(--space-4);border-bottom:1px solid var(--color-slate-100)">
+              <div class="text-sm fw-600 mb-2" style="color:var(--color-slate-700)">"${d.sentence || ''}"</div>
+              <div class="text-xs mb-2" style="color:var(--color-slate-500)">${d.comment || ''}</div>
+              <span class="badge badge-primary">得分: ${d.score || 0}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      ` : ''}
+      ${suggestions.length > 0 ? `
+      <div class="card" style="margin-bottom:var(--space-4)">
+        <div class="card-header" style="padding:var(--space-3) var(--space-5)"><div class="card-title" style="font-size:var(--text-sm)">🎯 改进建议</div></div>
+        <div class="card-body" style="padding:var(--space-4) var(--space-5)">
+          <ul style="margin:0;padding-left:var(--space-5)">
+            ${suggestions.map(s => `<li class="text-sm mb-2" style="color:var(--color-slate-600);line-height:1.6">${s}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+      ` : ''}
+      <div style="display:flex;gap:var(--space-3)">
+        <button class="btn btn-secondary" onclick="Modal.hide()" style="flex:1">关闭</button>
+      </div>
+    `,
+    footer: '',
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>报告查看 · 阅微 AI 诊断系统</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>.sidebar-toggle{display:none}@media(max-width:1024px){.sidebar-toggle{display:flex}}</style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">阅</div>
+      <div><div class="logo-text">阅微 AI</div><span class="logo-sub">智能诊断系统</span></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">数据概览</div>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-label">数据看板</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">教学管理</div>
+        <a href="invite-codes.html" class="nav-item"><span class="nav-icon">🎟</span><span class="nav-label">邀请码管理</span></a>
+        <a href="questions.html" class="nav-item"><span class="nav-icon">📝</span><span class="nav-label">题目管理</span></a>
+        <a href="reports.html" class="nav-item active"><span class="nav-icon">📋</span><span class="nav-label">报告查看</span></a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">系统配置</div>
+        <a href="methodology.html" class="nav-item"><span class="nav-icon">📖</span><span class="nav-label">方法论标准库</span></a>
+        <a href="settings.html" class="nav-item"><span class="nav-icon">⚙</span><span class="nav-label">系统设置</span></a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar">张</div>
+        <div class="user-info">
+          <div class="user-name">张明远</div>
+          <div class="user-role">语文教研组</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="topbar">
+      <button class="topbar-btn sidebar-toggle btn-icon"><span style="font-size:18px">☰</span></button>
+      <div class="breadcrumb">
+        <a href="dashboard.html" class="breadcrumb-item">首页</a>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-item current">报告查看</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="topbar-btn btn-icon" data-tooltip="通知">🔔</button>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <div class="page-header">
+        <div class="page-title-group">
+          <h1 class="page-title">报告查看</h1>
+          <p class="page-desc">查看学生历史诊断报告，支持个人报告详情与全班对比分析</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" onclick="openCompareModal()">
+            📊 全班对比
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="card" style="margin-bottom:var(--space-5)">
+        <div class="tabs" style="padding:var(--space-4) var(--space-6) 0">
+          <div class="tab-item active" onclick="switchView(this,'list')">📋 报告列表</div>
+          <div class="tab-item" onclick="switchView(this,'compare')">📊 对比视图</div>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" id="list-toolbar">
+        <div class="toolbar-search search-input-wrapper" style="flex:1;max-width:320px">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-input" id="search-input" placeholder="搜索学生姓名或题目…" oninput="renderReports()">
+        </div>
+        <div class="toolbar-filters">
+          <select class="form-select" id="filter-subject" onchange="renderReports()" style="width:130px">
+            <option value="">全部科目</option>
+            <option value="诗歌">诗歌鉴赏</option>
+            <option value="现代文">现代文阅读</option>
+          </select>
+          <select class="form-select" id="filter-range" onchange="renderReports()" style="width:130px">
+            <option value="">全部时间</option>
+            <option value="today">今天</option>
+            <option value="week">近7天</option>
+            <option value="month">近30天</option>
+          </select>
+        </div>
+        <div class="toolbar-actions">
+          <span class="text-sm text-muted" id="report-count">共 42 份报告</span>
+        </div>
+      </div>
+
+      <!-- Reports List -->
+      <div class="card" id="list-view">
+        <div id="reports-table"></div>
+        <div class="pagination" id="pagination"></div>
+      </div>
+
+      <!-- Compare View -->
+      <div id="compare-view" style="display:none">
+
+        <!-- Compare Header -->
+        <div class="card" style="margin-bottom:var(--space-5)">
+          <div class="card-body" style="padding:var(--space-5) var(--space-6)">
+            <div style="display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap">
+              <div>
+                <div class="text-xs text-muted mb-1">对比题目</div>
+                <select class="form-select" style="width:260px" onchange="renderCompare()">
+                  <option>24年期中·诗歌鉴赏-饮酒</option>
+                  <option>现代文·背影阅读理解</option>
+                  <option>24年期中·现代文-孔乙己</option>
+                </select>
+              </div>
+              <div>
+                <div class="text-xs text-muted mb-1">班级范围</div>
+                <select class="form-select" style="width:160px" onchange="renderCompare()">
+                  <option>高一(2)班 · 全部学生</option>
+                  <option>高一(1)班</option>
+                  <option>高一(3)班</option>
+                </select>
+              </div>
+              <div style="margin-left:auto;display:flex;gap:var(--space-3)">
+                <span class="badge badge-success">📗 班级均分 72.4</span>
+                <span class="badge badge-primary">👥 42份报告</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Score Distribution -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);margin-bottom:var(--space-5)">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📊 得分分布</div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                    <span class="text-sm fw-500">优秀 (≥8分)</span>
+                    <span class="text-sm fw-600 text-success">14人 (33%)</span>
+                  </div>
+                  <div class="progress"><div class="progress-bar success" style="width:33%"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                    <span class="text-sm fw-500">良好 (6-7.9分)</span>
+                    <span class="text-sm fw-600 text-primary">18人 (43%)</span>
+                  </div>
+                  <div class="progress"><div class="progress-bar" style="width:43%"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                    <span class="text-sm fw-500">及格 (4-5.9分)</span>
+                    <span class="text-sm fw-600 text-warning">7人 (17%)</span>
+                  </div>
+                  <div class="progress"><div class="progress-bar warning" style="width:17%"></div></div>
+                </div>
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                    <span class="text-sm fw-500">待提升 (&lt;4分)</span>
+                    <span class="text-sm fw-600 text-danger">3人 (7%)</span>
+                  </div>
+                  <div class="progress"><div class="progress-bar danger" style="width:7%"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">🎯 高频错误类型</div></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:var(--space-3)">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="badge badge-danger">TOP1</span>
+                    <span class="text-sm">答题口语化</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="progress" style="width:80px;height:6px"><div class="progress-bar danger" style="width:78%"></div></div>
+                    <span class="text-sm fw-600 text-danger">78%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="badge badge-warning">TOP2</span>
+                    <span class="text-sm">术语缺失</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="progress" style="width:80px;height:6px"><div class="progress-bar warning" style="width:61%"></div></div>
+                    <span class="text-sm fw-600 text-warning">61%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="badge badge-info">TOP3</span>
+                    <span class="text-sm">情感分析浅层</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="progress" style="width:80px;height:6px"><div class="progress-bar" style="width:48%"></div></div>
+                    <span class="text-sm fw-600">48%</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="display:flex;align-items:center;gap:var(--space-2)">
+                    <span class="badge badge-neutral">TOP4</span>
+                    <span class="text-sm">结构分析缺失</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <div class="progress" style="width:80px;height:6px"><div class="progress-bar" style="width:29%"></div></div>
+                    <span class="text-sm fw-600">29%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Ranking Table -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">👥 学生得分明细</div>
+            <button class="btn btn-ghost btn-sm">📤 导出</button>
+          </div>
+          <div class="table-wrapper">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>排名</th>
+                  <th>学生</th>
+                  <th>班级</th>
+                  <th>得分</th>
+                  <th>得分率</th>
+                  <th>主要问题</th>
+                  <th>提交时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-success" style="width:24px;text-align:center">🥇</span></td>
+                  <td><div class="fw-600">刘思琪</div></td>
+                  <td>高一(2)班</td>
+                  <td><span class="fw-700 text-success">9.5</span><span class="text-muted">/10</span></td>
+                  <td><span class="badge badge-success badge-dot">95%</span></td>
+                  <td><span class="badge badge-neutral">无明显问题</span></td>
+                  <td class="text-muted text-xs">4月17日 10:23</td>
+                  <td><button class="action-link" onclick="openReportModal(1)">查看 ›</button></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-success" style="width:24px;text-align:center">🥈</span></td>
+                  <td><div class="fw-600">张雨萱</div></td>
+                  <td>高一(2)班</td>
+                  <td><span class="fw-700 text-success">8.5</span><span class="text-muted">/10</span></td>
+                  <td><span class="badge badge-success badge-dot">85%</span></td>
+                  <td><span class="badge badge-neutral" style="font-size:10px">术语略欠精准</span></td>
+                  <td class="text-muted text-xs">4月17日 09:15</td>
+                  <td><button class="action-link" onclick="openReportModal(2)">查看 ›</button></td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-success" style="width:24px;text-align:center">🥉</span></td>
+                  <td><div class="fw-600">李明轩</div></td>
+                  <td>高一(2)班</td>
+                  <td><span class="fw-700 text-success">7.5</span><span class="text-muted">/10</span></td>
+                  <td><span class="badge badge-primary badge-dot">75%</span></td>
+                  <td><span class="badge badge-warning" style="font-size:10px">答题口语化</span></td>
+                  <td class="text-muted text-xs">4月17日 08:42</td>
+                  <td><button class="action-link" onclick="openReportModal(3)">查看 ›</button></td>
+                </tr>
+                <tr style="background: var(--color-warning-light)">
+                  <td><span class="badge badge-warning" style="width:24px;text-align:center">⚠️</span></td>
+                  <td><div class="fw-600">陈子轩</div></td>
+                  <td>高一(3)班</td>
+                  <td><span class="fw-700 text-danger">3.0</span><span class="text-muted">/10</span></td>
+                  <td><span class="badge badge-danger badge-dot">30%</span></td>
+                  <td><span class="badge badge-danger" style="font-size:10px">术语缺失、情感浅层</span></td>
+                  <td class="text-muted text-xs">4月16日 16:30</td>
+                  <td><button class="action-link" onclick="openReportModal(4)">查看 ›</button></td>
+                </tr>
+                <tr>
+                  <td><span class="text-muted">4</span></td>
+                  <td><div class="fw-600">王思涵</div></td>
+                  <td>高一(1)班</td>
+                  <td><span class="fw-700 text-warning">5.0</span><span class="text-muted">/10</span></td>
+                  <td><span class="badge badge-warning badge-dot">50%</span></td>
+                  <td><span class="badge badge-info" style="font-size:10px">手法误判</span></td>
+                  <td class="text-muted text-xs">4月16日 14:20</td>
+                  <td><button class="action-link" onclick="openReportModal(5)">查看 ›</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <div class="pagination-info">显示 1-5 条，共 42 条</div>
+            <div class="pagination-controls">
+              <button class="pagination-btn" disabled>‹</button>
+              <button class="pagination-btn active">1</button>
+              <button class="pagination-btn">2</button>
+              <button class="pagination-btn">3</button>
+              <span class="pagination-btn" style="border:none;cursor:default">…</span>
+              <button class="pagination-btn">9</button>
+              <button class="pagination-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="../js/app.js"></script>
+<script>
+const API_BASE = 'http://yuwenstudy.top:3804';
+
+let allReports = [];
+let currentView = 'list';
+let pagination;
+
+function authHeaders() {
+  const token = localStorage.getItem('yw_token');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+// Load reports from API
+async function loadReports() {
+  try {
+    const res = await fetch(`${API_BASE}/api/reports?limit=100`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      allReports = json.data.list.map(r => ({
+        id: r.id,
+        student: r.student_name || '未知',
+        class: r.student_info || '—',
+        subject: r.question_title ? (r.question_title.includes('诗歌') ? '诗歌' : '现代文') : '—',
+        title: r.question_title || '未知题目',
+        score: r.score || 0,
+        maxScore: 10,
+        status: r.status === 'completed' ? 'normal' : r.status === 'processing' ? 'warning' : 'danger',
+        submittedAt: r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '—',
+        raw: r
+      }));
+      renderReports(1);
+    }
+  } catch(err) {
+    Toast.error('网络错误', '无法加载报告数据');
+  }
+}
+
+function switchView(el, view) {
+  currentView = view;
+  el.parentElement.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('list-view').style.display = view === 'list' ? 'block' : 'none';
+  document.getElementById('list-toolbar').style.display = view === 'list' ? 'flex' : 'none';
+  document.getElementById('compare-view').style.display = view === 'compare' ? 'block' : 'none';
+
+  if (view === 'compare') renderCompare();
+}
+
+const columns = [
+  {
+    key:'student', label:'学生',
+    render:(v, row) => `
+      <div class="fw-600">${v}</div>
+      <div class="text-xs text-muted">${row.class}</div>
+    `,
+  },
+  { key:'title', label:'题目', render:(v) => `<span class="truncate" style="max-width:200px;display:block">${v}</span>` },
+  { key:'subject', label:'科目', render:(v) => v==='诗歌' ? '<span class="badge badge-secondary">诗歌</span>' : '<span class="badge badge-info">现代文</span>' },
+  {
+    key:'score', label:'得分',
+    render:(v, row) => {
+      const pct = row.maxScore > 0 ? v / row.maxScore * 100 : 0;
+      const cls = pct >= 80 ? 'success' : pct >= 60 ? 'warning' : 'danger';
+      return `<span class="fw-700 text-${cls}">${v || '—'}</span><span class="text-muted">/${row.maxScore}</span>`;
+    }
+  },
+  {
+    key:'status', label:'状态',
+    render:(v) => {
+      const map = { normal:'success', warning:'warning', danger:'danger' };
+      const label = { normal:'正常', warning:'处理中', danger:'异常' };
+      return `<span class="badge badge-${map[v]} badge-dot">${label[v]}</span>`;
+    }
+  },
+];
+
+const actions = [
+  { key:'view', label:'查看报告', class:'text-primary', onClick:(row) => openReportModal(row.id) },
+  { key:'compare', label:'对比', onClick:(row) => { switchView(document.querySelector('.tab-item:last-child'), 'compare'); } },
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  pagination = new Pagination({
+    container: document.getElementById('pagination'),
+    initialPage: 1,
+    limit: 5,
+    total: 0,
+    onChange: (page) => renderReports(page),
+  });
+  loadReports();
+});
+
+function renderReports(page = 1) {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const subject = document.getElementById('filter-subject').value;
+
+  let filtered = allReports.filter(r => {
+    if (subject && r.subject !== subject) return false;
+    if (search && !r.student.includes(search) && !r.title.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  document.getElementById('report-count').textContent = `共 ${filtered.length} 份报告`;
+
+  const limit = 5;
+  const start = (page - 1) * limit;
+  const pageData = filtered.slice(start, start + limit);
+
+  pagination.total = filtered.length;
+  pagination.currentPage = page;
+  pagination.render();
+
+  const table = new DataTable({
+    container: document.getElementById('reports-table'),
+    columns,
+    data: pageData,
+    actions,
+    emptyText: '暂无符合条件的报告',
+  });
+}
+
+function renderCompare() {
+  // Compare view uses real data if available, otherwise static
+  const subject = document.getElementById('filter-subject').value;
+  const filtered = allReports.filter(r => !subject || r.subject === subject);
+
+  if (filtered.length > 0) {
+    const avgScore = (filtered.reduce((sum, r) => sum + (r.score || 0), 0) / filtered.length).toFixed(1);
+    const excellentCount = filtered.filter(r => (r.score || 0) >= 8).length;
+    const goodCount = filtered.filter(r => (r.score || 0) >= 6 && (r.score || 0) < 8).length;
+    const passCount = filtered.filter(r => (r.score || 0) >= 4 && (r.score || 0) < 6).length;
+    const failCount = filtered.filter(r => (r.score || 0) < 4).length;
+    const total = filtered.length;
+
+    // Update stats
+    const statCards = document.querySelectorAll('#compare-view .badge');
+    if (statCards[0]) statCards[0].textContent = `📗 班级均分 ${avgScore}`;
+    if (statCards[1]) statCards[1].textContent = `👥 ${total}份报告`;
+
+    // Update distribution bars
+    const distBars = document.querySelectorAll('#compare-view .progress-bar');
+    if (distBars[0]) { distBars[0].style.width = `${(excellentCount/total)*100}%`; distBars[0].className = `progress-bar success`; }
+    if (distBars[1]) { distBars[1].style.width = `${(goodCount/total)*100}%`; distBars[1].className = `progress-bar`; }
+    if (distBars[2]) { distBars[2].style.width = `${(passCount/total)*100}%`; distBars[2].className = `progress-bar warning`; }
+    if (distBars[3]) { distBars[3].style.width = `${(failCount/total)*100}%`; distBars[3].className = `progress-bar danger`; }
+
+    // Update distribution counts
+    const distTexts = document.querySelectorAll('#compare-view .fw-500');
+    if (distTexts[0]) distTexts[0].innerHTML = `优秀 (≥8分) <span class="fw-600 text-success" style="float:right">${excellentCount}人 (${Math.round(excellentCount/total*100)}%)</span>`;
+    if (distTexts[1]) distTexts[1].innerHTML = `良好 (6-7.9分) <span class="fw-600 text-primary" style="float:right">${goodCount}人 (${Math.round(goodCount/total*100)}%)</span>`;
+    if (distTexts[2]) distTexts[2].innerHTML = `及格 (4-5.9分) <span class="fw-600 text-warning" style="float:right">${passCount}人 (${Math.round(passCount/total*100)}%)</span>`;
+    if (distTexts[3]) distTexts[3].innerHTML = `待提升 (&lt;4分) <span class="fw-600 text-danger" style="float:right">${failCount}人 (${Math.round(failCount/total*100)}%)</span>`;
+
+    // Sort by score for ranking
+    const sorted = [...filtered].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+    // Update tbody
+    const tbody = document.querySelector('#compare-view tbody');
+    if (tbody && sorted.length > 0) {
+      tbody.innerHTML = sorted.slice(0, 10).map((r, i) => {
+        const pct = r.maxScore > 0 ? Math.round((r.score || 0) / r.maxScore * 100) : 0;
+        const rankClass = i === 0 ? 'badge-success' : i === 1 ? 'badge-success' : i === 2 ? 'badge-success' : '';
+        const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="text-muted">${i + 1}</span>`;
+        const rowClass = r.score < 4 ? 'style="background: var(--color-warning-light)"' : '';
+        const statusBadge = pct >= 80 ? 'badge-success' : pct >= 60 ? 'badge-primary' : pct >= 40 ? 'badge-warning' : 'badge-danger';
+
+        return `
+          <tr ${rowClass}>
+            <td><span class="badge ${rankClass}" style="width:24px;text-align:center">${rankEmoji}</span></td>
+            <td><div class="fw-600">${r.student}</div></td>
+            <td>${r.class}</td>
+            <td><span class="fw-700 ${pct >= 80 ? 'text-success' : pct >= 60 ? 'text-warning' : 'text-danger'}">${r.score || '—'}</span><span class="text-muted">/10</span></td>
+            <td><span class="badge ${statusBadge} badge-dot">${pct}%</span></td>
+            <td><span class="badge badge-neutral">—</span></td>
+            <td class="text-muted text-xs">${r.submittedAt}</td>
+            <td><button class="action-link" onclick="openReportModal(${r.id})">查看 ›</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+  }
+}
+
+async function openReportModal(id) {
+  try {
+    const res = await fetch(`${API_BASE}/api/reports/${id}`, {
+      headers: authHeaders()
+    });
+    const json = await res.json();
+    if (json.code === 0) {
+      const r = json.data;
+      const scorePct = r.score || 0;
+      const scoreColor = scorePct >= 80 ? 'success' : scorePct >= 60 ? 'warning' : 'danger';
+      const details = r.details || [];
+      const suggestions = r.suggestions || [];
+
+      Modal.show({
+        title: `📋 诊断报告 · ${r.student_name}`,
+        size: 'xl',
+        content: `
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)">
+            <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);background:var(--color-slate-50);border-radius:var(--radius-lg)">
+              <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#4F46E5,#7C3AED);display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:700">${(r.student_name || '未知')[0]}</div>
+              <div>
+                <div class="fw-700" style="font-size:var(--text-base)">${r.student_name}</div>
+                <div class="text-xs text-muted">${r.student_info || ''}</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">
+              <div style="text-align:center;padding:var(--space-4);background:var(--color-${scoreColor}-light);border-radius:var(--radius-lg)">
+                <div style="font-size:var(--text-2xl);font-weight:700;color:var(--color-${scoreColor});font-family:var(--font-inter)">${r.score || 0}</div>
+                <div class="text-xs text-muted">综合得分</div>
+              </div>
+              <div style="text-align:center;padding:var(--space-4);background:var(--color-slate-50);border-radius:var(--radius-lg)">
+                <div style="font-size:var(--text-2xl);font-weight:700;color:var(--color-slate-600);font-family:var(--font-inter)">${r.question_title || '—'}</div>
+                <div class="text-xs text-muted">题目</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:var(--space-4)">
+            <div class="fw-600 text-sm mb-3">💡 诊断摘要</div>
+            <div style="background:var(--color-slate-50);padding:var(--space-4);border-radius:var(--radius-lg);font-size:var(--text-sm);line-height:1.8;color:var(--color-slate-600)">
+              ${r.overall_comment || '暂无总评'}
+            </div>
+          </div>
+
+          ${details.length > 0 ? `
+          <div style="margin-bottom:var(--space-4)">
+            <div class="fw-600 text-sm mb-3">📝 逐句批注（节选）</div>
+            <div style="border:1px solid var(--color-slate-100);border-radius:var(--radius-lg);overflow:hidden">
+              ${details.slice(0, 5).map(d => `
+                <div style="padding:var(--space-3) var(--space-4);${d.score >= 2 ? 'background:var(--color-success-light)' : d.score >= 1 ? 'background:var(--color-warning-light)' : ''};border-bottom:1px solid var(--color-slate-100);display:flex;justify-content:space-between">
+                  <div>
+                    <span class="badge ${d.score >= 2 ? 'badge-success' : d.score >= 1 ? 'badge-warning' : 'badge-danger'}" style="font-size:10px">${d.score >= 2 ? '✅ 正确' : d.score >= 1 ? '⚠️ 部分正确' : '❌ 错误'}</span>
+                    <span class="text-sm" style="margin-left:8px">"${d.sentence || ''}"</span>
+                    ${d.comment ? `<div class="text-xs text-muted" style="margin-top:4px;margin-left:4px">${d.comment}</div>` : ''}
+                  </div>
+                  <span class="text-xs text-muted">+${d.score || 0}分</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          ` : ''}
+
+          ${suggestions.length > 0 ? `
+          <div>
+            <div class="fw-600 text-sm mb-3">🎯 改进建议</div>
+            <ul style="margin:0;padding-left:var(--space-5)">
+              ${suggestions.map(s => `<li class="text-sm mb-2" style="color:var(--color-slate-600);line-height:1.6">${s}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+        `,
+        footer: `
+          <button class="btn btn-secondary" onclick="Modal.hide()">关闭</button>
+          <button class="btn btn-primary" onclick="Modal.hide()">🖨 打印报告</button>
+        `,
+      });
+    } else {
+      Toast.error('获取失败', json.message);
+    }
+  } catch(err) {
+    Toast.error('网络错误', '无法获取报告详情');
+  }
+}
+
+async function openCompareModal() {
+  Modal.show({
+    title: '📊 全班对比分析',
+    size: 'xl',
+    content: `
+      <div style="margin-bottom:var(--space-5)">
+        <div class="form-group" style="margin-bottom:var(--space-4)">
+          <label class="form-label">选择题目</label>
+          <select class="form-select" id="compare-question" style="max-width:300px">
+            ${allReports.map(r => `<option value="${r.id}">${r.title}</option>`).slice(0, 10).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">选择班级</label>
+          <select class="form-select" style="max-width:300px">
+            <option>全部班级</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:var(--color-slate-50);padding:var(--space-5);border-radius:var(--radius-lg);text-align:center">
+        <div style="font-size:48px;margin-bottom:var(--space-2)">📊</div>
+        <div class="fw-600 text-sm">点击「开始分析」生成全班对比报告</div>
+        <div class="text-xs text-muted mt-2">包含得分分布、错误类型统计、排名明细</div>
+      </div>
+    `,
+    footer: `
+      <button class="btn btn-secondary" onclick="Modal.hide()">取消</button>
+      <button class="btn btn-primary" onclick="Modal.hide();Toast.success('分析完成','已生成全班对比报告')">📊 开始分析</button>
+    `,
+  });
+}
+</script>
+</body>
+</html>
